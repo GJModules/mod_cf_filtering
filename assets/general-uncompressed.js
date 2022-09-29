@@ -275,6 +275,15 @@ var customFilters = {
 
         //load the filtering module
         if (customFiltersProp[module_id].loadModule && !formSubmitBtn) {
+            /**
+             * TODO : Если нет отмеченных фильтров - перезагружаем страницу - Разобраться - без перезагрузки.
+             * -- ссылка на пункт меню для фильтра /administrator/index.php?option=com_menus&view=item&client_id=0&layout=edit&id=173
+             */
+            if ( modurl.indexOf('/filter/') === -1 ){
+                window.location.href = modurl ;
+                return ;
+            }
+
             this.loadModule(event, module_id, modurl);
         }
 

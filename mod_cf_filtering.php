@@ -8,6 +8,7 @@
 
 // no direct access
 defined('_JEXEC') or die();
+// die(__FILE__ .' '. __LINE__ );
 
 //load dependencies
 require_once dirname(__FILE__) . '/bootstrap.php';
@@ -31,6 +32,7 @@ $modObj = new \ModCfFilteringHelper($params, $module);
 
 
 $filters = $modObj->getFilters();
+
 
 
 
