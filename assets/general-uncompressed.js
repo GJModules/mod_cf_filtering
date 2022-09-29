@@ -279,10 +279,27 @@ var customFilters = {
              * TODO : Если нет отмеченных фильтров - перезагружаем страницу - Разобраться - без перезагрузки.
              * -- ссылка на пункт меню для фильтра /administrator/index.php?option=com_menus&view=item&client_id=0&layout=edit&id=173
              */
-            if ( modurl.indexOf('/filter/') === -1 ){
+
+
+            if ( testEmptyFilter() ){
                 window.location.href = modurl ;
                 return ;
             }
+
+            /**
+             * Проверить что нет отмеченных фильтров
+             * @returns {boolean}
+             */
+            function testEmptyFilter(){
+                var $ = jQuery ;
+                var checkBox = $('input.cf_flt[type="checkbox"]:checked')
+                if ( typeof checkBox[0] === 'undefined' )  return true  ;
+
+                return false ;
+
+                
+            }
+
 
             this.loadModule(event, module_id, modurl);
         }
