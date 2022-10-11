@@ -2,11 +2,14 @@
 /**
  * @package     customfilters
  * @subpackage  mod_cf_filtering
- * @copyright   Copyright (C) 2012-2020 breakdesigns.net . All rights reserved.
+ * @copyright   Copyright (C) 2012-2021 breakdesigns.net . All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;
+
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Helper\ModuleHelper;
 
 if (count($filter->getOptions()) == 0) {
     return false;
@@ -33,9 +36,9 @@ if (!empty($currency_info) && $key == 'price') {
     if ($currency_info->currency_positive_style) {
         if (strpos($currency_info->currency_positive_style, '{symbol}') == 0) {
             $symbol_start = '&nbsp;' . $currency_info->currency_symbol;
-        } else $symbol_end = '<span class="cf_currency"></span>';
+        } else $symbol_end = '<span class="cf_currency">' . $currency_info->currency_symbol . '&nbsp;' . '</span>';
     } else {
-        $symbol_start = '<span class="cf_currency"></span>';
+        $symbol_start = '<span class="cf_currency">&nbsp;' . $currency_info->currency_symbol . '</span>';
         $symbol_end = '';
     }
 }
@@ -53,54 +56,44 @@ $input_class = 'cf_wrapper_input_text_' . count($filter->getOptions()); ?>
             $maxlength = !empty($option->maxlength) ? $option->maxlength : 7;
             $label = !empty($option->label) ? $option->label : '';
             $placeholder = !empty($option->placeholder) ? $option->placeholder : '';
-            $value_found = $value_found == true || $option->value?true:false;
+            $aria_label = !empty($option->aria_label) ? $option->aria_label : (!empty($option->placeholder) ? $option->placeholder : '');
+            $value_found = $value_found == true || !empty($option->value) ? true : false;
             $inputType = $filter->getType() == 'string' ? 'search' : 'text';
             $inputMode = $filter->getType() == 'string' ? 'text' : 'numeric';
             $pattern = !empty($option->pattern) ? $option->pattern : '';
             ?>
 
             <?php if($label) {?>
-                <? if ($label == 'до') {
-                    ?>
-                    <label for="<?php echo $display_key, '_', $index ?>">-</label>
-                    <?
-                }
-                else{
-                    ?>
-                    <label for="<?php echo $display_key, '_', $index ?>"><?php echo $label ?></label>
-                    <?
-                } ?>
-                
+                <label for="<?php echo $display_key, '_', $index ?>"><?php echo $label ?></label>
             <?php } ?>
             <?php echo $symbol_start; ?>
             <input name="<?php echo $option->name ?>"
-            type="<?php echo $inputType?>"
-            <?php  echo !empty($pattern)? 'pattern="'.$pattern.'"' : '';?>
-            value="<?php echo $option->value ?>"
-            aria-label="<?php echo $placeholder; ?>"
-            placeholder="<?php echo $placeholder; ?>" size="<?php echo $size ?>"
-            maxlength="<?php echo $maxlength ?>"
-            autocomplete="off"
-            inputmode="<?php echo $inputMode?>";
-            id="<?php echo $display_key, '_', $index ?>" <?php echo $script ?>
-            class="cf_search_input">
+                   type="<?php echo $inputType?>"
+                   id="<?php echo $display_key, '_', $index ?>" <?php echo $script ?>
+                   class="cf_search_input"
+                    <?php  echo !empty($pattern)? 'pattern="'.$pattern.'"' : '';?>
+                   value="<?php echo !empty($option->value) ? $option->value : ''?>"
+                   aria-label="<?php echo $aria_label; ?>"
+                   placeholder="<?php echo $placeholder; ?>" size="<?php echo $size ?>"
+                   maxlength="<?php echo $maxlength ?>"
+                   autocomplete="off"
+                   inputmode="<?php echo $inputMode?>">
             <?php echo $symbol_end ?>
             <?php
         } ?>
 
-        <button style="display: none;" type="submit" class="cf_search_button btn" id="<?php echo $display_key?>_button" aria-label="<?php echo JText::_('MOD_CF_APPLY') ?>">
+        <button type="submit" class="cf_search_button btn" id="<?php echo $display_key?>_button" aria-label="<?php echo Text::_('MOD_CF_APPLY') ?>">
             <i class="cficon-search"></i>
         </button>
 
         <?php
         //if slider exists, it will display it's own "clear"
         if ($value_found && !$sliderExist) { ?>
-            <br/><?php require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
+            <br/><?php require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
         }
         ?>
     </div>
     <div class="cf_message" id="<?php echo $display_key ?>_message"></div>
     <input type="hidden" value="<?php echo $clear_url ?>" id="<?php echo $display_key ?>_url"/>
 </div>
-
 

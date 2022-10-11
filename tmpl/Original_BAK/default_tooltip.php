@@ -2,7 +2,7 @@
 /**
  * @package     customfilters
  * @subpackage  mod_cf_filtering
- * @copyright   Copyright © 2010-2020 Breakdesigns.net. All rights reserved.
+ * @copyright   Copyright © 2010-2021 Breakdesigns.net. All rights reserved.
  * @license     GNU General Public License 2 or later, see COPYING.txt for license details.
  */
 

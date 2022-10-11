@@ -2,7 +2,7 @@
 /**
  * @package		customfilters
  * @subpackage	mod_cf_filtering
- * @copyright	Copyright (C) 2012-2020 breakdesigns.net . All rights reserved.
+ * @copyright	Copyright (C) 2012-2021 breakdesigns.net . All rights reserved.
  * @license		GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -19,17 +19,11 @@ HTMLHelper::_('behavior.framework');
 if(count($filters) == 0) {
     return false;
 }
-$app = JFactory::getApplication();
+
 $document = Factory::getDocument();
 $direction = $document->getDirection();
 $jinput = Factory::getApplication()->input;
-
-
-
-/**
- * @var UrlHandler
- */
-$urlHandler = new UrlHandler( $module, $selected_filters);
+$urlHandler = new UrlHandler($module, $selected_filters);
 $view = $jinput->get('view', 'products', 'cmd');
 $component = $jinput->get('option', '', 'cmd');
 $menu_params = \cftools::getMenuparams();
@@ -42,19 +36,16 @@ $scriptFiles = [];
 $scriptProcesses = $modObj->getScriptProcesses();
 
 require_once JPATH_BASE . '/modules/mod_cf_filtering/scriptHelper.php';
-
-JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
-$seoTools = new seoTools();
-$patchToVmCategory = $seoTools->getPatchToVmCategory();
-
-
+$document->addScript(JURI::root().'modules/mod_cf_filtering/assets/general.js' , ['mime' => 'text/javascript'], ['defer' => true]);
+$document->addScript(JURI::root().'components/com_virtuemart/assets/js/cvfind.js', ['mime' => 'text/javascript']);
+$document->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css');
 
 /*
  * view == module is used only when the module is loaded with ajax.
  * We want only the form to be loaded with ajax requests.
  * The cf_wrapp_all of the primary module, will be used as the container of the ajax response
  */
-if( $view != 'module' ){?>
+if($view!='module'){?>
     <div id="cf_wrapp_all_<?php echo $module->id ?>" class="cf_wrapp_all cf_wrapp_all<?php echo $moduleclass_sfx?>">
 <?php }
 ?>
@@ -63,17 +54,6 @@ if( $view != 'module' ){?>
           class="cf_form<?php echo htmlspecialchars($params->get('moduleclass_sfx'));?>" id="cf_form_<?php echo $module->id?>">
 
         <?php
-        $profiler = \JProfiler::getInstance('PRO_Application - module');
-        $profiler->mark('Start default.php');
-
-
-        if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-        {
-//	        echo'<pre>';print_r( $filters );echo'</pre>'.__FILE__.' '.__LINE__;
-//	        die(__FILE__ .' '. __LINE__ );
-
-        }
-
         /**
          * @var \CfFilter $filter
          */
@@ -86,7 +66,6 @@ if( $view != 'module' ){?>
                 <?php
                 //Filter Header
                 $header = $filter->getHeader();
-
                 if(!empty($header)) {
                     $state = $filter->getExpanded() == true ? 'show' : 'hide'; ?>
 
@@ -131,89 +110,25 @@ if( $view != 'module' ){?>
 								  });";
                     }
 
-
-                    $profiler->mark('Before $filter->getDisplay()');
-
-
-
-
                     /*
                      * load the options through sub-layouts.
                      * A filter can have more than 1 display (e.g. range inputs and slider together)
                      */
-                    $filtersDisplay = $filter->getDisplay();
-
-                    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-                    {
-//	                    echo'<pre>';print_r( $filtersDisplay );echo'</pre>'.__FILE__.' '.__LINE__;
-//	                    echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//	                    die(__FILE__ .' '. __LINE__ );
-
-                    }
-
-                    foreach ( $filtersDisplay as $display) {
+                    foreach ($filter->getDisplay() as $display) {
                         $layout = array_search($display, $filter->displays);
-                        ?>
-                        <!-- Start layout <?= $layout ?> -->
-                        <?php
-
-	                    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-	                    {
-                            // Ссылка фильтра - которая содержит только категорию
-		                    $option_url = \JRoute::_( $urlHandler->getURL($filter, $option->id, $option->type ));
-
-		                    $Options = $filter->getOptions() ;
-
-
-
-
-//		                    echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                    echo'<pre>';print_r( $option );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                    echo'<pre> Options';print_r( $Options );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                    echo'<pre>';print_r( $option_url );echo'</pre>'.__FILE__.' '.__LINE__;
-
-//		                    die(__FILE__ .' '. __LINE__ );
-
-	                    }
-
-	                    $profiler->mark('Start require default_'.$layout .' - default.php');
                         require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_'.$layout);
-	                    $profiler->mark('End require default_'.$layout .' - default.php' );
-                        ?>
-                        <!-- End layout <?= $layout ?> -->
-                        <?php
                     }
-                    $profiler->mark('After $filter->getDisplay()');
                     ?>
                 </div>
             </div>
             <?php
         }
 
-        $profiler->mark('After foreach $filters-  default.php');
-
-        //reset all link -
+        //reset all link
         if($params->get('disp_reset_all', 1) &&  !empty($selected_filters['selected_flt'])){
-
-            $ResetUri = $urlHandler->getResetUri();
-//            $resetAllLink =  Route::_( $urlHandler->getResetUri() );
-
-//            echo'<pre>';print_r( $patchToVmCategory );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            echo'<pre>';print_r( $ResetUri );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            echo'<pre>';print_r( $resetAllLink );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            echo'<pre>';print_r( $app->input );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            die( __FILE__ .' ' . __LINE__);
-//
-//            $resetAllLink = str_replace('/filter/' , '/catalog/' , $resetAllLink ) ;
-
-
-
             ?>
-            <a class="cf_resetAll_link cf_no_ajax" rel="nofollow"
-               data-module-id="<?= $module->id ?>" href="<?= $patchToVmCategory ?>">
-                <span class="cf_resetAll_label">
-                    <?= JText::_('MOD_CF_RESET_ALL')?>
-                </span>
+            <a class="cf_resetAll_link" rel="nofollow" data-module-id="<?php echo $module->id?>" href="<?php echo Route::_($urlHandler->getResetUri())?>">
+                <span class="cf_resetAll_label"><?php echo JText::_('MOD_CF_RESET_ALL')?></span>
             </a>
             <?php
         }?>
@@ -263,20 +178,14 @@ if( $view != 'module' ){?>
         ?>
 
     </form>
-
 <?php
-
-$profiler->mark('END  default.php');
-
-if ($view != 'module')
-{
-	?>
+if($view!='module'){?>
     </div>
 <?php }
 
 //Scripts
 //load the VM scripts and styles in pages other than VM and CF when ajax is used
-if($params->get('results_loading_mode','ajax')=='ajax' && $component != 'com_customfilters' || $component!='com_virtuemart' || ($component=='com_virtuemart' && $view!='category')){
+if($params->get('results_loading_mode','ajax')=='ajax' && $component!='com_customfilters' || $component!='com_virtuemart' || ($component=='com_virtuemart' && $view!='category')){
     \cftools::loadScriptsNstyles();
 }
 
@@ -293,8 +202,6 @@ if (!empty($styles)) {
 }
 
 $scriptVars = $modObj->getScriptVars();
-
-
 if (!empty($scriptVars)) {
     $script_var_counter = count($scriptVars);
     $j = 1;
@@ -309,11 +216,6 @@ if (!empty($scriptVars)) {
         $j++;
     }
     $script .= '};';
-
-//    echo'<pre>';print_r( $script );echo'</pre>'.__FILE__.' '.__LINE__;
-//    die(__FILE__ .' '. __LINE__ );
-
-
     $document->addScriptDeclaration($script);
 }
 

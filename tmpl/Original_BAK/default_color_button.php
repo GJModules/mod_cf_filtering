@@ -2,11 +2,13 @@
 /**
  * @package     customfilters
  * @subpackage  mod_cf_filtering
- * @copyright   Copyright (C) 2012-2020 breakdesigns.net . All rights reserved.
+ * @copyright   Copyright (C) 2012-2021 breakdesigns.net . All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC')or die;
+
+use Joomla\CMS\Helper\ModuleHelper;
 
 //no options, no game
 if(count($filter->getOptions())==0) {
@@ -32,7 +34,7 @@ if(empty($key)) {
 
         //create classes for the category tree
         if ($key == 'virtuemart_category_id' && $params->get('categories_disp_order','names') == 'tree' && (int)$option->id > 0 && isset($option->cat_tree)) {
-            require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_category_tree');
+            require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_category_tree');
         }
 
         if($option->selected){
@@ -47,7 +49,7 @@ if(empty($key)) {
 
             if($option->type =='clear') {
                 //load the clear link from another layout
-                require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
+                require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
                 continue;
             }?>
 
@@ -67,7 +69,6 @@ if(empty($key)) {
             //inactive option
             if(!$option->active) {?>
                 <div class="cf_option cf_disabled_opt cf_color_btn<?php echo $opt_class?>" role="button" aria-disabled="true">
-
                     <?php
                     // add the color name for accessibility reasons
                     if(isset($option->description) && $option->description!='') {?>
@@ -85,7 +86,7 @@ if(empty($key)) {
                 if(isset($option->description) && $option->description!='') {
                     $tooltipContent = $option->description;
                     $display_key_element = $element_id;
-                    require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_tooltip');
+                    require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_tooltip');
                 }
             }
 
@@ -101,8 +102,8 @@ if(empty($key)) {
                         <?php }?>
 
                         <?php foreach($colors_multi as $clr){
-                            $color=cftools::checkNFormatColor($clr);?>
-                            <span class="cf_color_inner" style="background-color:<?php echo $color?>; width:<?php echo $color_btn_width?>%" aria-hidden="true"></span>
+                                $color=cftools::checkNFormatColor($clr);?>
+                                <span class="cf_color_inner" style="background-color:<?php echo $color?>; width:<?php echo $color_btn_width?>%" aria-hidden="true"></span>
                         <?php }?>
                     </a>
 
@@ -111,7 +112,7 @@ if(empty($key)) {
                     if(isset($option->description) && $option->description!='') {
                         $tooltipContent = $option->description;
                         $display_key_element = $element_id;
-                        require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_tooltip');
+                        require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_tooltip');
                     }
                     ?>
                 </div>

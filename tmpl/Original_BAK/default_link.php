@@ -2,11 +2,13 @@
 /**
  * @package     customfilters
  * @subpackage  mod_cf_filtering
- * @copyright   Copyright (C) 2012-2020 breakdesigns.net . All rights reserved.
+ * @copyright   Copyright (C) 2012-2021 breakdesigns.net . All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC')or die;
+
+use Joomla\CMS\Helper\ModuleHelper;
 
 //no options, no game
 if(count($filter->getOptions())==0) {
@@ -15,8 +17,6 @@ if(count($filter->getOptions())==0) {
 if(empty($key)) {
     $key = '';
 }
-
-
 ?>
 
 <ul class="cf_filters_list" id="cf_list_<?php echo $key,'_',$module->id?>">
@@ -34,7 +34,7 @@ if(empty($key)) {
 
         //create classes for the category tree
         if ($key == 'virtuemart_category_id' && $params->get('categories_disp_order','names') == 'tree' && (int)$option->id > 0 && isset($option->cat_tree)) {
-            require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_category_tree');
+            require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_category_tree');
         }
 
         if($option->selected){
@@ -45,7 +45,7 @@ if(empty($key)) {
 
             if($option->type =='clear') {
                 //load the clear link from another layout
-                require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
+                require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
                 continue;
             }?>
 
@@ -59,7 +59,7 @@ if(empty($key)) {
 
                 //active option
                 else{
-                    require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_link');
+                    require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_link');
 
                     //we need to keep the selected in the form
                     if($option->selected){?>

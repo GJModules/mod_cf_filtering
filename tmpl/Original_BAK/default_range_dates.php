@@ -2,13 +2,15 @@
 /**
  * @package     customfilters
  * @subpackage  mod_cf_filtering
- * @copyright   Copyright (C) 2012-2020 breakdesigns.net . All rights reserved.
+ * @copyright   Copyright (C) 2012-2021 breakdesigns.net . All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;
 
-use \Joomla\CMS\Language\Text;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Helper\ModuleHelper;
+
 
 if (count($filter->getOptions()) == 0) {
     return false;
@@ -55,7 +57,7 @@ $clear_url = JRoute::_($urlHandler->getURL($filter, '', 'clear'));
             <br>
             <?php
             //load the clear link from another layout
-            require \JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
+            require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
         } ?>
         <input type="hidden" value="<?php echo $clear_url ?>" id="<?php echo $display_key ?>_url"/>
     </div>

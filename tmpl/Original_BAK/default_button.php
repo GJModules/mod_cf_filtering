@@ -2,11 +2,13 @@
 /**
  * @package     customfilters
  * @subpackage  mod_cf_filtering
- * @copyright   Copyright (C) 2012-2020 breakdesigns.net . All rights reserved.
+ * @copyright   Copyright (C) 2012-2021 breakdesigns.net . All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC')or die;
+
+use Joomla\CMS\Helper\ModuleHelper;
 
 //no options, no game
 if(count($filter->getOptions())==0) {
@@ -15,8 +17,6 @@ if(count($filter->getOptions())==0) {
 if(empty($key)) {
     $key = '';
 }
-
-
 ?>
 
 <ul class="cf_filters_list cf_btn_list" id="cf_list_<?php echo $key,'_',$module->id?>">
@@ -34,7 +34,7 @@ if(empty($key)) {
 
         //create classes for the category tree
         if ($key == 'virtuemart_category_id' && $params->get('categories_disp_order','names') == 'tree' && (int)$option->id > 0 && isset($option->cat_tree)) {
-            require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_category_tree');
+            require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_category_tree');
         }
 
         if($option->selected){
@@ -50,12 +50,11 @@ if(empty($key)) {
 
             if($option->type =='clear') {
                 //load the clear link from another layout
-                require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
+                require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
                 continue;
             }?>
 
             <?php
-
 
             //inactive option
             if(!$option->active) {?>
@@ -68,8 +67,9 @@ if(empty($key)) {
             //active option
             else{?>
                 <span class="cf_link" role="button" aria-pressed="<?php echo $option->selected ? 'true' : 'false';?>">
-                    <a href="<?php echo $option_url; ?>" id="<?php echo $element_id, '_a' ?>" class="cf_option cf_button <?php echo $option->selected ? 'cf_sel_opt' : '', ' ', $opt_class ?>"
-                        data-module-id="<?php echo $module->id ?>" <?php echo $params->get('indexfltrs_by_search_engines', 0) == false ? 'rel="nofollow"' : '' ?>>
+                    <a href="<?php echo $option_url; ?>" id="<?php echo $element_id, '_a' ?>"
+                       class="cf_option cf_button <?php echo $option->selected ? 'cf_sel_opt' : '', ' ', $opt_class ?>"
+                       data-module-id="<?php echo $module->id ?>" <?php echo $params->get('indexfltrs_by_search_engines', 0) == false ? 'rel="nofollow"' : '' ?>>
                         <?php echo $option->label ?>
                     </a>
                 </span>

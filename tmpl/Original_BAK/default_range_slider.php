@@ -2,13 +2,14 @@
 /**
  * @package     customfilters
  * @subpackage  mod_cf_filtering
- * @copyright   Copyright (C) 2012-2020 breakdesigns.net . All rights reserved.
+ * @copyright   Copyright (C) 2012-2021 breakdesigns.net . All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
-use Joomla\CMS\Language\Text;
-
 defined('_JEXEC') or die;
+
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Helper\ModuleHelper;
 
 if (count($filter->getOptions()) == 0) {
     return false;
@@ -120,7 +121,7 @@ $options = $filter->getOptions();
 <?php
 if (($option_from->value || $option_to->value)) { //generate the clear link
     ?>
-    <?php require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
+    <?php require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_clear');
 } ?>
 
 
