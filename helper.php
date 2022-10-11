@@ -8,17 +8,14 @@
 
 // no direct access
 defined('_JEXEC') or die();
-
-
-
-
-
  
 use Joomla\Registry\Registry;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+
+
 
 /**
  * The module helper class which contains the basic module's logic
@@ -30,32 +27,47 @@ use Joomla\CMS\Language\Text;
  */
 class ModCfFilteringHelper
 {
-    /**
+	/**
+	 * @var ModCfFilteringHelper
+	 * @since version
+	 */
+	protected static $instance;
+
+	/**
+	 * выбранные критерии будут храниться в этом ассоциированном массиве /
      * the selected criteria will be stored in this assoc array
      *
      * @var array
+	 * @since 3.9
      */
     public $selected_flt = [];
 
     /**
+     * хранит выборки, которые использует каждый фильтр в зависимости сверху вниз /
      * stores the selections that each filter uses in dependency top-bottom
+     *
      * @var array
+     * @since 3.9
      */
     public $selected_fl_per_flt = [];
 
     /**
+     * удалить неактивное из этого массива
      * remove the inactive from this array
      * @var array
+     * @since 3.9
      */
     public $selected_flt_modif = [];
 
     /**
      * @var CfFilter[]
+     * @since 3.9
      */
     protected $filters = [];
 
     /**
      * @var array
+     * @since 3.9
      */
     protected $display = [];
 
@@ -67,6 +79,7 @@ class ModCfFilteringHelper
 
     /**
      * @var Registry
+     * @since 3.9
      */
     public $moduleparams;
 
@@ -76,7 +89,6 @@ class ModCfFilteringHelper
      * @var stdClass
      */
     public $currency_info;
-
     /**
      * @var string
      */
@@ -174,17 +186,23 @@ class ModCfFilteringHelper
      */
     protected $profiler;
 
-    /**
+	/**
+	 * @var UrlHandler
+	 * @since version
+	 */
+	protected $urlHandler;
+
+	/**
      * ModCfFilteringHelper constructor.
      *
-     * @param Registry $params
-     * @param \stdClass $module
+     * @param Registry    $params
+     * @param   stdClass  $module
+     *
      * @throws Exception
      * @since 1.0
      */
-    public function __construct(Registry $params, $module)
+    public function __construct(Registry $params, stdClass $module )
     {
-
 
         $this->moduleparams = $params;
         $this->module = $module;
@@ -204,6 +222,9 @@ class ModCfFilteringHelper
         $this->scriptVars['results_wrapper'] = $params->get('results_wrapper', 'bd_results');
         $this->optionsHelper = \OptionsHelper::getInstance($params, $module);
 
+
+
+
         // profiler to get performance metrics
         $profilerParam = $this->moduleparams->get('cf_profiler', 0);
 
@@ -212,7 +233,79 @@ class ModCfFilteringHelper
         }
     }
 
-    /**
+	/**
+	 * @param stdClass  $options
+	 *
+	 * @return ModCfFilteringHelper
+	 *
+	 * @throws Exception
+	 * @since version
+	 */
+	/*public static function instance( $options = array() ): ModCfFilteringHelper
+	{
+		if ( self::$instance === null ){
+			self::$instance = new self($options);
+		}
+		return self::$instance;
+	}#END FN*/
+	
+	/*public static  function ModuleInit( $params  )
+	{
+		$module = JModuleHelper::getModule( 'mod_cf_filtering'  );
+
+
+		$layout = $params->get('layout', 'default') ;
+		// $LayoutPath == /templates/marketprofil/html/mod_cf_filtering/default.php
+		$LayoutPath = JModuleHelper::getLayoutPath('mod_cf_filtering', $layout) ;
+
+
+		ob_start();
+
+		echo '<div id="mod_menu_categories_shop-Data"></div>';
+//		echo '<template id="mod_menu_categories_shop-Template">';
+		require(  $LayoutPath );
+//		echo '</template>';
+		$htmlData = ob_get_contents();
+		ob_end_clean();
+
+
+		return $htmlData ;
+	}*/
+
+	/**
+	 * Получить идентификатор Cache
+	 *
+	 * @throws Exception
+	 * @since version
+	 */
+	public static function getCacheId(   $moduleparams , $module  ){
+		$input   = \JFactory::getApplication()->input;
+		$uri     = $input->getArray();
+		$safeuri = new stdClass() ;
+		$noHtmlFilter = \JFilterInput::getInstance();
+
+		$uri = \Joomla\CMS\Uri\Uri::getInstance();
+		$link = $uri->toString(array('path', 'query', 'fragment'));
+
+
+
+
+		/*foreach ($cacheparams->modeparams as $key => $value)
+		{
+			// Use int filter for id/catid to clean out spamy slugs
+			if (isset($uri[$key])   )
+			{
+				$safeuri->$key = $noHtmlFilter->clean($uri[$key], $value);
+			}
+		}*/
+
+
+
+		return   md5(serialize( array( $link,   $moduleparams , $module->id ) ) );
+	}
+
+
+	/**
      * The entry point for the filters generation
      *
      * Точка входа для генерации фильтров
@@ -223,24 +316,6 @@ class ModCfFilteringHelper
      */
     public function getFilters()
     {
-
-	    if ( $_SERVER['REMOTE_ADDR'] == '80.187.99.133' )
-	    {
-		    $config = \Joomla\CMS\Factory::getConfig();
-		    $config->set('error_reporting' , 'development' );
-		    $config->set('debug' , 1 );
-
-
-
-
-	    }#END IF
-
-
-
-
-
-
-
         if ($this->results_loading_mode == 'ajax' || $this->results_trigger == 'btn') {
             $loadAjaxModule = true;
         }
@@ -249,12 +324,8 @@ class ModCfFilteringHelper
         }
 
 
-
-
         $this->scriptVars['loadModule'] = $loadAjaxModule;
         $dependency_dir = $this->moduleparams->get('dependency_direction', 'all');
-
-
 
         // profiler to get performance metrics
         // профилировщик для получения показателей производительности
@@ -264,17 +335,9 @@ class ModCfFilteringHelper
         // массив опций выбранных фильтров;
         $selected_flt = \CfInput::getInputs();
 
-
-
-
         // selected filters after encoding the output
         // выбранные фильтры после кодирования вывода
         $this->selected_flt = \CfOutput::getOutput($selected_flt, true);
-
-
-
-//        echo'<pre>';print_r(  $this->selected_flt );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-
 
         // holds the selections which should be used for each filter,
         // when the dependency is from-top to bottom
@@ -282,15 +345,10 @@ class ModCfFilteringHelper
             $this->selected_fl_per_flt = \CfOutput::getOutput( CfInput::getInputsPerFilter($this->module), true, true);
         }
 
-
-
         // check if reset is active
         $this->reset = Factory::getApplication()->input->get('reset', 0, 'int');
 
         $displayManager = new \DisplayManager($this->moduleparams, $this->selected_flt);
-
-
-
 
         // define the filters order
         $filters_order = json_decode(str_replace("'", '"', $this->moduleparams->get('filterlist', '')));
@@ -646,6 +704,8 @@ class ModCfFilteringHelper
                         $cf_range_size = 6;
                         $cf_range_maxlength = 5;
 
+
+
                         // get the options
                         foreach ($custom_flt as $cf) {
                             /*
@@ -659,10 +719,8 @@ class ModCfFilteringHelper
 
                             $var_name = "custom_f_$cf->custom_id";
                             $key = $var_name;
-                            $display_key = $key . '_' . $this->module->id; // used as key to the html code
-
-
-
+                            // etc: custom_f_33_127
+							$display_key = $key . '_' . $this->module->id; // used as key to the html code
 
 
                             // load the params of that cf
@@ -678,33 +736,21 @@ class ModCfFilteringHelper
                                 }
                             }
 
+
+
                             // selectable types
-                            if (strpos($cf->disp_type, CfFilter::DISPLAY_INPUT_TEXT) === false && strpos($cf->disp_type, CfFilter::DISPLAY_RANGE_SLIDER) === false && strpos($cf->disp_type, CfFilter::DISPLAY_RANGE_DATES) === false)
+                            if ( strpos($cf->disp_type, CfFilter::DISPLAY_INPUT_TEXT) === false
+	                            && strpos($cf->disp_type, CfFilter::DISPLAY_RANGE_SLIDER) === false
+	                            && strpos($cf->disp_type, CfFilter::DISPLAY_RANGE_DATES) === false)
                             {
                                 $this->display[$key] = $cf->disp_type;
 
-
-
                                 // Создаем Поля - со значениями getFilter
                                 $filter = $this->getFilter($var_name, Text::_($cf->custom_title), true);
+	                            if(!isset($filter)) continue;
 
-
-
-
-                                if(!isset($filter)) {
-                                    continue;
-                                }
-
-	                            if ( $_SERVER['REMOTE_ADDR'] == '80.187.99.133' )
-	                            {
-//		                            echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                            die(__FILE__ .' '. __LINE__ );
-	                            }
-
-
-                                // Set the description
-                                $filter->setDescription(isset($cf->tooltip) ? $cf->tooltip : '');
-
+	                            // Set the description
+	                            $filter->setDescription(isset($cf->tooltip) ? $cf->tooltip : '');
 
 
 
@@ -755,12 +801,17 @@ class ModCfFilteringHelper
 
                             // Set the filter, only if it has values
                             if ( !empty($filter->getOptions())) {
-                                $filter->setClearType('this');
+
+								$filter->setClearType('this');
                                 $filter->setDisplay($cf->disp_type);
                                 $filter->setExpanded($cfparams->get('expanded', '1'));
                                 $filter->setHeader(Text::_($cf->custom_title));
                                 $this->filters[$key] = $filter;
+
                             }
+
+
+
 
 
                             // profiler
@@ -773,13 +824,9 @@ class ModCfFilteringHelper
             } // switch
         } // foreach
 
-
-//        die( __FILE__ .' ' . __LINE__);
-
         // profiler print metrics
-        if ($profilerParam) {
-            \cftools::printProfiler($this->profiler);
-        }
+        if ($profilerParam)  \cftools::printProfiler($this->profiler);
+
 
         if (count($this->filters) > 0) {
             $this->scriptVars['parent_link'] = $this->moduleparams->get('category_flt_parent_link', 0);
@@ -816,8 +863,45 @@ class ModCfFilteringHelper
             }
         }
 
-//        echo'<pre>';print_r( $this->filters );echo'</pre>'.__FILE__.' : '.__LINE__ .'<br>';
-//        die( __FILE__ .' : ' . __LINE__);
+	    /**
+	     * -----------------------------------------------------------------
+	     */
+
+	    /**
+	     * @var array $selected_filters - Выбранные фильтры
+	     */
+	    $selected_filters = $this->getSelectedFilters();
+	    $this->urlHandler = new UrlHandler( $this->module, $selected_filters);
+
+
+	    $seoTools = new seoTools();
+		$optionsFilterArr = [];
+	    foreach ( $this->filters as $key => &$filter)
+	    {
+
+		    $Options = $filter->getOptions() ;
+		    foreach ( $Options as &$option)
+		    {
+				// создаем URL /filtr/metallocherepitsa/?custom_f_22[0]......
+			    $option->option_url = \JRoute::_( $this->urlHandler->getURL($filter, $option->id, $option->type ));
+			    // Добавить obj. SEF Link
+				$option->option_sef_url =   $seoTools->createSefUrl( $option->option_url );
+			    $optionsFilterArr[] = $option->option_sef_url ;
+
+
+
+				
+			}#END FOREACH $Options
+
+
+
+		    // Устанавливаем Опции фильтра
+		    $filter->setOptions( $Options );
+
+		}#END FOREACH
+
+	    $seoTools->updateSeoTable( $optionsFilterArr );
+	    
 
         return $this->filters;
     }
@@ -1337,13 +1421,16 @@ class ModCfFilteringHelper
     }
 
     /**
+     * Удалить любую неактивную опцию из выбранных опций
+     * Этот массив позже используется функцией getURI, которая не должна использовать inactive для генерации URI опции.
+     *
      * Remove any inactive option from the selected options
      * This array is used later by the getURI func which should not use the inactive to generate the option's URI
      *
      * @return array
      * @since 1.0
      */
-    public function removeInactiveOpt()
+    public function removeInactiveOpt(): array
     {
         if (empty($this->selected_flt)) {
             return $this->selected_flt;
@@ -1367,14 +1454,13 @@ class ModCfFilteringHelper
      * @return array
      * @since 1.50
      */
-    public function getSelectedFilters()
+    public function getSelectedFilters(): array
     {
-        $selected_flt = [
-            'selected_flt' => $this->selected_flt,
-            'selected_flt_modif' => $this->selected_flt_modif,
-            'selected_fl_per_flt' => $this->selected_fl_per_flt
-        ];
-        return $selected_flt;
+	    return [
+	        'selected_flt' => $this->selected_flt,
+	        'selected_flt_modif' => $this->selected_flt_modif,
+	        'selected_fl_per_flt' => $this->selected_fl_per_flt
+	    ];
     }
 
     /**

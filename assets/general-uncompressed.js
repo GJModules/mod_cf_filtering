@@ -365,7 +365,8 @@ var customFilters = {
 
     getFilterName: function (name) {
         var filterName = name.match(/([a-z]+_){1,2}/i);
-        if (filterName[0]) {
+
+        if (filterName !== null && filterName[0]) {
             filterName = filterName[0].replace(/(_{1}$)/, '');
         }
         else filterName = '';

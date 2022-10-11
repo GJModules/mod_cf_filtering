@@ -293,12 +293,15 @@ class CfFilter
      * @return array
      * @since 2.8.0
      */
-    public function getOptions()
+    public function getOptions(): array
     {
         return $this->options;
     }
 
     /**
+     * Задайте параметры в ассоциативном массиве по их идентификаторам
+     * Во многих случаях мы обращаемся к массиву по идентификатору опции
+     *
      * Set the options in an associative array by their ids
      * In many cases we access the array by the option's id
      *
@@ -306,7 +309,7 @@ class CfFilter
      * @return $this
      * @since 2.8.0
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): CfFilter
     {
         // reset it in case it had previous options set
         $this->options = [];
