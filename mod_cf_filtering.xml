@@ -2,13 +2,13 @@
 <extension type="module" version="3.5" client="site" method="upgrade">
 	<name>mod_cf_filtering</name>
 
-	<author>breadkesigns</author>
-	<authorUrl>https://breakdesigns.net</authorUrl>
-	<copyright>Copyright(c) 2021 breakdesigns.net</copyright>
+	<author>Gartes</author>
+	<authorUrl></authorUrl>
+	<copyright>Copyright(c)</copyright>
 	<license>GNU/GPL v.2</license>
 
-	<creationDate>03.10.22-12:01</creationDate>
-	<version>3.10.6</version>
+	<creationDate>14.10.22-15:44</creationDate>
+	<version>3.10.8</version>
 
 	<description><![CDATA[<h3>Custom Filters <i style="font-size:12px">(v.2.10.1 <span style="font-size:9px">14 Jul 2021</span>)</i></h3>
     <span><img src="../modules/mod_cf_filtering/assets/cf_logo.png"/></span>
@@ -68,9 +68,12 @@
 				<field type="spacer" name="cfspacer_other_gen" class="cfspacer"
 					   label="MOD_CF_FILTERING_OTHER_GENERAL_PARAMS" description="MOD_CF_FILTERING_OTHER_PARAMS" />
 
+				<!-- зависимость направления -->
 				<field name="dependency_direction" type="list" default="all"
 					   label="MOD_CF_FILTERING_DEPENDENCY_DIR_LABEL" description="MOD_CF_FILTERING_DEPENDENCY_DIR_DESC">
+					<!-- Все - означает зависимость фильтра и от вышестоящих и от нижестоящих фильтров. -->
 					<option value="all">MOD_CF_FILTERING_DEPENDENCY_DIR_ALL</option>
+					<!-- Сверху вниз - означает, что фильтр будет зависеть только от фильтров расположенных ниже. -->
 					<option value="t-b">MOD_CF_FILTERING_DEPENDENCY_DIR_TOP_TO_BOTTOM
 					</option>
 				</field>
@@ -200,6 +203,7 @@
 					<option value="2">MOD_CF_FILTERING_SHOW_ENABLED</option>
 				</field>
 
+				<!-- Отображать счетчик возле каждой опции-->
 				<field name="category_flt_display_counter_results" type="radio"
 					   class="btn-group btn-group-yesno" default="1"
 					   label="MOD_CF_FILTERING_DISP_NUM_RESULTS_LABEL" description="MOD_CF_FILTERING_DISP_NUM_RESULTS_DESC">
@@ -207,6 +211,7 @@
 					<option value="0">JNO</option>
 				</field>
 
+				<!-- Очищать выбор других фильтров или поисковых запросов при смене категории-->
 				<field name="category_flt_onchange_reset" type="list"
 					   class="btn-group btn-group-yesno" default="filters"
 					   label="MOD_CF_FILTERING_ONCHANGE_RESET_FLTRS_LABEL" description="MOD_CF_FILTERING_ONCHANGE_RESET_FLTRS_DESC">
@@ -218,6 +223,7 @@
 				<field type="spacer" class="cfspacer" name="myspacer_cat_other"
 					   label="MOD_CF_FILTERING_OTHER_PARAMS" />
 
+				<!-- Вид отображения --> <!-- Внешний вид отображения опций на страницах -->
 				<field name="category_flt_disp_type" type="list" default="3"
 					   label="MOD_CF_FILTERING_DISP_TYPE_LABEL" description="MOD_CF_FILTERING_DISP_TYPE_DESC">
 					<option value="1">MOD_CF_FILTERING_SELECT</option>
@@ -226,24 +232,30 @@
 					<option value="4">MOD_CF_FILTERING_LINK</option>
 				</field>
 
+				<!-- Способ и порядок отображения категорий -->
 				<field name="categories_disp_order" type="list" default="tree"
 					   label="MOD_CF_FILTERING_CAT_DISP_ORDER" description="MOD_CF_FILTERING_CAT_DISP_ORDER_DESC">
-					<option value="ordering">MOD_CF_FILTERING_VM_CAT_ORDER_ORDERING
-					</option>
+					<option value="ordering">MOD_CF_FILTERING_VM_CAT_ORDER_ORDERING</option>
+					<!-- - names - В алфавитном порядке -->
 					<option value="names">MOD_CF_FILTERING_VM_CAT_ORDER_NAMES</option>
+					<!-- - tree  - Дерево категорий -->
 					<option value="tree">MOD_CF_FILTERING_VM_CAT_TREE</option>
 				</field>
 
+				<!-- Отображать только под-категории, когда родительская категория выбрана/посещена -->
 				<field name="category_flt_only_subcats" type="radio"
-					   default="0" class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_DISPLAY_SUBCATS_LABEL"
+					   default="0" class="btn-group btn-group-yesno" label="-MOD_CF_FILTERING_DISPLAY_SUBCATS_LABEL"
 					   description="MOD_CF_FILTERING_DISPLAY_SUBCATS_DESC">
 					<option value="1">JYES</option>
 					<option value="0">JNO</option>
 				</field>
 
+				<!-- Отображаемые категории -->
+				<!-- ID категорий, которые должны отображаться в фильтре (Например: 1,5,8).
+				пустое для отображения всех категорий. -->
 				<field name="category_flt_disp_vm_cat" type="text" default=""
 					   size="50" label="MOD_CF_FILTERING_DISP_VMCAT_LABEL" description="MOD_CF_FILTERING_DISP_VMCAT_DESC" />
-
+				<!-- Скрываемые категории -->
 				<field name="category_flt_exclude_vm_cat" type="text" default=""
 					   size="50" label="MOD_CF_FILTERING_EXCLUDE_VMCAT_LABEL" description="MOD_CF_FILTERING_EXCLUDE_VMCAT_DESC" />
 

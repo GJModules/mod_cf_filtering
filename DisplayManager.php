@@ -43,6 +43,7 @@ class DisplayManager
     }
 
     /**
+     * Управляйте параметрами правил отображения для указанного файла, чтобы проверить, должен ли фильтр отображаться на текущей странице.
      * Control the display rules params for the specified flt to check if a filter should be displayed in the current page
      *
      * @param string $flt_sfx The filter suffix as used in the filtering module
@@ -67,20 +68,27 @@ class DisplayManager
 
 
 
+
+
         // always visible in the cf pages
         if ($is_published) {
             if ($option == 'com_customfilters') {
                 $display = true;
-            } elseif ($option == 'com_virtuemart') {
+            }
+            elseif ($option == 'com_virtuemart') {
                 if ($view == 'category' && !empty($vm_cat_id)) {
                     $param_name = $flt_sfx . '_vm_category_pages';
-                } // manufacturer page or the page that comes after selecting a manufacturer (category page)
+                }
+                // manufacturer page or the page that comes after selecting a manufacturer (category page)
                 elseif (($view == 'manufacturer') || ($view == 'category' && !empty($vm_mnf_id))) {
                     $param_name = $flt_sfx . '_vm_manuf_pages';
-                } elseif ($view == 'productdetails' && $vm_prd_id) {
+                }
+                elseif ($view == 'productdetails' && $vm_prd_id) {
                     $param_name = $flt_sfx . '_vm_productdetails_pages';
-                } // other views
-                elseif (($view != 'manufacturer' && $view != 'category' && $view != 'productdetails') || ($view == 'category' && empty($vm_cat_id) && empty($vm_mnf_id))) { // other
+                }
+                // other views
+                elseif (($view != 'manufacturer' && $view != 'category' && $view != 'productdetails') || ($view == 'category' && empty($vm_cat_id) && empty($vm_mnf_id))) {
+                    // other
                     $param_name = $flt_sfx . '_vm_other_pages';
                 }
                 if (isset($param_name)) {

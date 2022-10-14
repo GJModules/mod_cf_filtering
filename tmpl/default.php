@@ -45,7 +45,7 @@ require_once JPATH_BASE . '/modules/mod_cf_filtering/scriptHelper.php';
 
 JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
 $seoTools = new seoTools();
-$patchToVmCategory = $seoTools->getPatchToVmCategory();
+$patchToVmCategory = seoTools::getPatchToVmCategory();
 
 
 
@@ -157,7 +157,7 @@ if( $view != 'module' ){?>
                         <!-- Start layout <?= $layout ?> -->
                         <?php
 
-	                    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	                    /*if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 	                    {
                             // Ссылка фильтра - которая содержит только категорию
 		                    $option_url = \JRoute::_( $urlHandler->getURL($filter, $option->id, $option->type ));
@@ -174,7 +174,7 @@ if( $view != 'module' ){?>
 
 //		                    die(__FILE__ .' '. __LINE__ );
 
-	                    }
+	                    }*/
 
 	                    $profiler->mark('Start require default_'.$layout .' - default.php');
                         require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_'.$layout);
@@ -196,17 +196,6 @@ if( $view != 'module' ){?>
         if($params->get('disp_reset_all', 1) &&  !empty($selected_filters['selected_flt'])){
 
             $ResetUri = $urlHandler->getResetUri();
-//            $resetAllLink =  Route::_( $urlHandler->getResetUri() );
-
-//            echo'<pre>';print_r( $patchToVmCategory );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            echo'<pre>';print_r( $ResetUri );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            echo'<pre>';print_r( $resetAllLink );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            echo'<pre>';print_r( $app->input );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            die( __FILE__ .' ' . __LINE__);
-//
-//            $resetAllLink = str_replace('/filter/' , '/catalog/' , $resetAllLink ) ;
-
-
 
             ?>
             <a class="cf_resetAll_link cf_no_ajax" rel="nofollow"

@@ -6,12 +6,26 @@
  * @license        GNU General Public License version 2 or later; see LICENSE.txt
  */
 
+if (!defined('DEV_IP')) {
+	define('DEV_IP',     '***.***.***.***');
+}
+
 // no direct access
 use Joomla\CMS\Cache\Cache;
 use Joomla\CMS\Factory;
 
+
+
+JFactory::getDocument()->addStyleDeclaration('
+    body{
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important ; 
+    }
+     
+');
+
 if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 {
+
 	$config = \Joomla\CMS\Factory::getConfig();
 	$config->set('error_reporting' , 'development' );
 	$config->set('debug' , 1 );
@@ -19,6 +33,9 @@ if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 
 
 defined('_JEXEC') or die();
+
+
+
 
 JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
 

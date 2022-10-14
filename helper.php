@@ -404,7 +404,7 @@ class ModCfFilteringHelper
 
                 // --Categories--
                 case 'virtuemart_category_id':
-                    if ($displayManager->getDisplayControl('category_flt')) {
+                    if ( $displayManager->getDisplayControl('category_flt') ) {
 
                         $key = $filter_key;
                         $display_key = $key . '_' . $this->module->id; // used as key to the html code
@@ -423,6 +423,8 @@ class ModCfFilteringHelper
                         $filter = $this->getFilter($key, $vmcat_header, false);
 
 
+//						echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
+//						die( __FILE__ .' ' . __LINE__);
 
                         if(!$filter) {
                             continue 2;
@@ -699,12 +701,8 @@ class ModCfFilteringHelper
 
                         $custom_flt = cftools::getCustomFilters($this->moduleparams);
 
-
-
                         $cf_range_size = 6;
                         $cf_range_maxlength = 5;
-
-
 
                         // get the options
                         foreach ($custom_flt as $cf) {
@@ -748,6 +746,8 @@ class ModCfFilteringHelper
                                 // Создаем Поля - со значениями getFilter
                                 $filter = $this->getFilter($var_name, Text::_($cf->custom_title), true);
 	                            if(!isset($filter)) continue;
+
+
 
 	                            // Set the description
 	                            $filter->setDescription(isset($cf->tooltip) ? $cf->tooltip : '');
@@ -872,33 +872,46 @@ class ModCfFilteringHelper
 	     */
 	    $selected_filters = $this->getSelectedFilters();
 	    $this->urlHandler = new UrlHandler( $this->module, $selected_filters);
+        $seoTools = new seoTools();
+    
 
 
-	    $seoTools = new seoTools();
+
+
 		$optionsFilterArr = [];
+		// Loop Filters
 	    foreach ( $this->filters as $key => &$filter)
 	    {
 
 		    $Options = $filter->getOptions() ;
-		    foreach ( $Options as &$option)
+			// Loop Option
+            foreach ( $Options as &$option)
 		    {
 				// создаем URL /filtr/metallocherepitsa/?custom_f_22[0]......
 			    $option->option_url = \JRoute::_( $this->urlHandler->getURL($filter, $option->id, $option->type ));
-			    // Добавить obj. SEF Link
-				$option->option_sef_url =   $seoTools->createSefUrl( $option->option_url );
-			    $optionsFilterArr[] = $option->option_sef_url ;
 
 
 
-				
+                // Добавить obj. SEF Link
+				$option->option_sef_url =   $seoTools->createSefUrl( $filter , $option  );
+
+                $var_name = $filter->getVarName();
+                if ( $var_name == 'virtuemart_category_id' )
+                {
+                    $option->option_sef_url->sef_url = $option->option_url ;
+                }#END IF
+
+			    $optionsFilterArr[] = $option ;
 			}#END FOREACH $Options
-
-
 
 		    // Устанавливаем Опции фильтра
 		    $filter->setOptions( $Options );
 
 		}#END FOREACH
+
+
+
+
 
 	    $seoTools->updateSeoTable( $optionsFilterArr );
 	    
@@ -907,8 +920,10 @@ class ModCfFilteringHelper
     }
 
     /**
-     * Creates a filter with all the basic properties including it's options
      * Создает фильтр со всеми основными свойствами, включая его параметры.
+     *
+     * Creates a filter with all the basic properties including it's options
+     *
      *
      * @param   string The name of the variable which will be used in the filtering form
      * @param   string The header of the filter
@@ -920,9 +935,6 @@ class ModCfFilteringHelper
      */
     public function getFilter($var_name , $header = '', $encoded_var = false)
     {
-
-
-
 
         $activeOptions = [];
         $on_category_reset_others = false;
@@ -950,6 +962,8 @@ class ModCfFilteringHelper
         $display_empty_opt = $this->moduleparams->get($suffix . '_disable_empty_filters', '1');
         $reset_type = $this->component_params->get('reset_results', 0);
         $selected_flt = $this->selected_flt;
+
+
         if ($dependency_direction == 't-b') {
             if (isset($this->selected_fl_per_flt[$var_name])) {
                 $selected_flt = $this->selected_fl_per_flt[$var_name];
@@ -960,101 +974,131 @@ class ModCfFilteringHelper
         }
 
         if ($var_name == 'virtuemart_category_id') {
+            // Параметр модуля [Категории -> Отображать счетчик возле каждой опции]
             $on_category_reset_others = $this->moduleparams->get('category_flt_onchange_reset', 'filters');
         }
+
+
+
+
 
 //        echo'<pre>';print_r( $selected_flt );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
 //        echo'<pre>';print_r( $this->selected_flt );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
 
-        /*
-         * Get the options of that filter from the relevant function that does not get into account the selections in other filters
-         *
-         * in case there is no selection
-         * or the only selection is the current filter
-         * or the display type is "show as enabled"
-         * or the dependency is top-to-bottom and its the 1st filter from top
-         * or reset filters on category change - for the categories filter
-         */
-        if (empty($selected_flt) ||
-            (!empty($selected_flt) && isset($selected_flt[$var_name]) && count($selected_flt) == 1) ||
-            $display_empty_opt == '2' ||
-            $on_category_reset_others == 'filters_keywords' ||
-            ($on_category_reset_others == 'filters' && empty($selected_flt['q'])))
-        {
+	    /*
+	     * Получите параметры этого фильтра из соответствующей функции, которая не учитывает выбор в других фильтрах.
+	     *
+	     * если нет выбора
+         * или единственный выбор - текущий фильтр
+         * или тип отображения "показать как включенный"
+         * или зависимость сверху вниз и это первый фильтр сверху
+         * или сбросить фильтры при изменении категории - для фильтра категорий
+	     *
+		 * Get the options of that filter from the relevant function that does not get into account the selections in other filters
+		 *
+		 * in case there is no selection
+		 * or the only selection is the current filter
+		 * or the display type is "show as enabled"
+		 * or the dependency is top-to-bottom and its the 1st filter from top
+		 * or reset filters on category change - for the categories filter
+		 */
+	    if (empty($selected_flt) ||
+		    (!empty($selected_flt) && isset($selected_flt[$var_name]) && count($selected_flt) == 1) ||
+		    $display_empty_opt == '2' ||
+		    $on_category_reset_others == 'filters_keywords' ||
+		    ($on_category_reset_others == 'filters' && empty($selected_flt['q'])))
+	    {
 
 
 //            echo'<pre>';print_r( $var_name );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
 //            die( __FILE__ .' ' . __LINE__);
 
 
-
-            $results = $this->optionsHelper->getOptions($var_name);
-
+		    $results = $this->optionsHelper->getOptions($var_name);
 
 
-            $options_ar = $results;
+		    $options_ar = $results;
 
-            if ($var_name == 'virtuemart_category_id') {
-                $options_ar = $results['options'];
-                $maxLevel = $results['maxLevel'];
-            }
+		    if ($var_name == 'virtuemart_category_id')
+		    {
+			    $options_ar = $results['options'];
+			    $maxLevel   = $results['maxLevel'];
+		    }
 
-            /*
-             * In case of display type=(2) "all as enabled" and the displayCounter is true
-             * We should run the getActiveOptions to get the counter relative to the selected filters
-             * This should happen only if there are selections in other filters.
-             * Also when the categories are affected by other selections, should get into that logic.
-             */
-            if ($display_empty_opt == '2'
-                && $options_ar
-                && (!empty($selected_flt) && ((!empty($selected_flt[$var_name]) && count($selected_flt) > 1) || empty($selected_flt[$var_name])))
-                && $displayCounter
-                && ($on_category_reset_others == '0' || ($on_category_reset_others == 'filters' && !empty($selected_flt['q'])))) {
-                $activeOptions = $this->optionsHelper->getActiveOptions($var_name);
-                $getActive = true;
-            }
-        } // hide disabled
+		    /*
+			 * In case of display type=(2) "all as enabled" and the displayCounter is true
+			 * We should run the getActiveOptions to get the counter relative to the selected filters
+			 * This should happen only if there are selections in other filters.
+			 * Also when the categories are affected by other selections, should get into that logic.
+			 */
+		    if ($display_empty_opt == '2'
+			    && $options_ar
+			    && (
+				    !empty($selected_flt)
+				    && ((!empty($selected_flt[$var_name])
+						    && count($selected_flt) > 1) || empty($selected_flt[$var_name])
+				    )
+			    )
+			    && $displayCounter
+			    && (
+				    $on_category_reset_others == '0'
+				    || ($on_category_reset_others == 'filters' && !empty($selected_flt['q']))
+			    ))
+		    {
 
-        elseif ($display_empty_opt == '0') {
-
-            // Получить Активные опции
-            $options_ar = $this->optionsHelper->getActiveOptions($var_name, $joinFieldData = true);
-
-
-
-
-            // this fixes an anomaly in optionsHelper. It always return an option for the stock, even with 0 counter
-            if($var_name == 'stock' && count($options_ar) == 1 && reset($options_ar)->counter==0){
-                $options_ar = [];
-            }
-            // when we have category tree we should get all the categories as all the parents should be active when they have sub-categories
-            if ($var_name == 'virtuemart_category_id' && $this->moduleparams->get('categories_disp_order', 'tree') == 'tree') {
-                $results = $this->optionsHelper->getOptions($var_name);
-                $maxLevel = $results['maxLevel'];
-                if ($maxLevel > 0) {
-                    $categories = $results['options'];
-                    $options_ar = $this->createTree($categories, $options_ar, $maxLevel);
-                }
-            }
-        }
-
-        // display empty as disabled
-        elseif ($display_empty_opt == '1') {
-            $results = $this->optionsHelper->getOptions($var_name);
-            $options_ar = $results;
-            if ($var_name == 'virtuemart_category_id') {
-                $options_ar = $results['options'];
-                $maxLevel = $results['maxLevel'];
-            }
-            if ($options_ar) {
-                $activeOptions = $this->optionsHelper->getActiveOptions($var_name);
-                $getActive = true;
-            }
-        }
+			    $activeOptions = $this->optionsHelper->getActiveOptions($var_name);
+			    $getActive     = true;
+		    }
+	    } // hide disabled
 
 
+	    elseif ($display_empty_opt == '0')
+	    {
 
-        // give to each option the necessary properties
+		    // Получить Активные опции
+		    $options_ar = $this->optionsHelper->getActiveOptions($var_name, $joinFieldData = true);
+
+
+		    // this fixes an anomaly in optionsHelper. It always return an option for the stock, even with 0 counter
+		    if ($var_name == 'stock' && count($options_ar) == 1 && reset($options_ar)->counter == 0)
+		    {
+			    $options_ar = [];
+		    }
+		    // when we have category tree we should get all the categories as all the parents should be active when they have sub-categories
+		    if ($var_name == 'virtuemart_category_id' && $this->moduleparams->get('categories_disp_order', 'tree') == 'tree')
+		    {
+			    $results  = $this->optionsHelper->getOptions($var_name);
+			    $maxLevel = $results['maxLevel'];
+			    if ($maxLevel > 0)
+			    {
+				    $categories = $results['options'];
+				    $options_ar = $this->createTree($categories, $options_ar, $maxLevel);
+			    }
+		    }
+	    }
+
+	    // display empty as disabled
+	    elseif ($display_empty_opt == '1')
+	    {
+		    $results    = $this->optionsHelper->getOptions($var_name);
+		    $options_ar = $results;
+		    if ($var_name == 'virtuemart_category_id')
+		    {
+			    $options_ar = $results['options'];
+			    $maxLevel   = $results['maxLevel'];
+		    }
+		    if ($options_ar)
+		    {
+			    $activeOptions = $this->optionsHelper->getActiveOptions($var_name);
+			    $getActive     = true;
+		    }
+	    }
+
+
+
+
+        // придать каждому варианту необходимые свойства
+	    // give to each option the necessary properties
         if (is_array($options_ar) && !empty($options_ar)) {
             $disp_type = isset($this->display[$var_name]) ? $this->display[$var_name] : 4;
             $displaySelectedOnTop = false;
@@ -1077,12 +1121,22 @@ class ModCfFilteringHelper
                 $activeOptions = [];
             }
 
+			// Начало создания фильтра
             $filter = new CfFilter();
             $filter->setVarName($var_name);
             $filter->setDisplay($disp_type);
             $filter->setHeader($header);
             $filter->setCounter($displayCounter);
-            $options = [];
+
+
+
+//            echo'<pre>';print_r( $options_ar );echo'</pre>'.__FILE__.' '.__LINE__;
+//            echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
+//            die(__FILE__ .' '. __LINE__ );
+
+
+
+			$options = [];
 
             // store the inactive selected too
             $innactive_selected = array();
@@ -1130,71 +1184,99 @@ class ModCfFilteringHelper
                     }
                 }
 
+
+
+
                 // when there are active options , get the counter from the getActiveOptions function
                 // this happens only when the display empty type is:"display as disabled" or "display as enabled" and there is a selection in another filter
-                if ($getActive) {
-                    if (isset($activeOptions[$opt->id]) || ! empty($opt->isparent)) {
-                        if ($filter->getCounter() && isset($activeOptions[$opt->id]->counter)) {
-                            $options[$key]['counter'] = $activeOptions[$opt->id]->counter;
-                        }
-                        $options[$key]['active'] = true;
-                        if((isset($options[$key]['counter']) && $options[$key]['counter'] == 0) && empty($opt->isparent)) {
-                            $options[$key]['active'] = false;
-                        }
-                        $has_active_opt = true;
-                        $activeArray[] = $opt->id;
-                    } else {
-                        if ($filter->getCounter()) {
-                            $options[$key]['counter'] = 0;
-                        }
-                        $options[$key]['active'] = false;
-                        if ($select_opt) {
-                            $innactive_selected[] = $opt->id;
-                        }
+	            if ($getActive)
+	            {
+		            if (isset($activeOptions[$opt->id]) || !empty($opt->isparent))
+		            {
+			            if ($filter->getCounter() && isset($activeOptions[$opt->id]->counter))
+			            {
+				            $options[$key]['counter'] = $activeOptions[$opt->id]->counter;
+			            }
+			            $options[$key]['active'] = true;
+			            if ((isset($options[$key]['counter']) && $options[$key]['counter'] == 0) && empty($opt->isparent))
+			            {
+				            $options[$key]['active'] = false;
+			            }
+			            $has_active_opt = true;
+			            $activeArray[]  = $opt->id;
+		            }
+		            else
+		            {
+			            if ($filter->getCounter())
+			            {
+				            $options[$key]['counter'] = 0;
+			            }
+			            $options[$key]['active'] = false;
+			            if ($select_opt)
+			            {
+				            $innactive_selected[] = $opt->id;
+			            }
 
-                        // when all are enabled
-                        if ($display_empty_opt == '2') {
-                            $options[$key]['active'] = true;
-                            if (isset($opt->counter) && $opt->counter > 0) {
-                                $has_active_opt = true;
-                            }
-                            $activeArray[] = $opt->id;
-                        }
-                    }
-                } else {
-                    if ($filter->getCounter() && isset($opt->counter)) {
-                        $options[$key]['counter'] = $opt->counter;
-                        if ((isset($opt->counter) && $opt->counter > 0) || $display_empty_opt == '2') {
-                            $options[$key]['active'] = true;
-                            $activeArray[] = $opt->id;
-                            if (isset($opt->counter) && $opt->counter > 0) {
-                            	$has_active_opt = true;
-                            }
-                        } else {
-                            if (! empty($opt->isparent)) {
-                                $options[$key]['active'] = true;
-                                unset($options[$key]['counter']);
-                            } else {
-                                $options[$key]['active'] = false;
-                            }
-                            if ($select_opt) {
-                                $innactive_selected[] = $opt->id;
-                            }
-                        }
-                    }
+			            // when all are enabled
+			            if ($display_empty_opt == '2')
+			            {
+				            $options[$key]['active'] = true;
+				            if (isset($opt->counter) && $opt->counter > 0)
+				            {
+					            $has_active_opt = true;
+				            }
+				            $activeArray[] = $opt->id;
+			            }
+		            }
+	            }
+	            else
+	            {
+		            if ($filter->getCounter() && isset($opt->counter))
+		            {
+			            $options[$key]['counter'] = $opt->counter;
+			            if ((isset($opt->counter) && $opt->counter > 0) || $display_empty_opt == '2')
+			            {
+				            $options[$key]['active'] = true;
+				            $activeArray[]           = $opt->id;
+				            if (isset($opt->counter) && $opt->counter > 0)
+				            {
+					            $has_active_opt = true;
+				            }
+			            }
+			            else
+			            {
+				            if (!empty($opt->isparent))
+				            {
+					            $options[$key]['active'] = true;
+					            unset($options[$key]['counter']);
+				            }
+				            else
+				            {
+					            $options[$key]['active'] = false;
+				            }
+				            if ($select_opt)
+				            {
+					            $innactive_selected[] = $opt->id;
+				            }
+			            }
+		            }
 
-                    // when there is no counter and there is no selection - all are inactive
-                    else {
-                        if (! empty($opt->emptyParent) && $disp_type == 1) {
-                            $options[$key]['active'] = false;
-                        }
-                        else {
-                            $options[$key]['active'] = true;
-                            $activeArray[] = $opt->id;
-                            $has_active_opt = true;
-                        }
-                    }
-                }
+		            // when there is no counter and there is no selection - all are inactive
+		            else
+		            {
+			            if (!empty($opt->emptyParent) && $disp_type == 1)
+			            {
+				            $options[$key]['active'] = false;
+			            }
+			            else
+			            {
+				            $options[$key]['active'] = true;
+				            $activeArray[]           = $opt->id;
+				            $has_active_opt          = true;
+			            }
+		            }
+
+	            }
 
                 //unset inactive options
                 if($options[$key]['active'] == 0 && $display_empty_opt == 0) {
@@ -1224,6 +1306,8 @@ class ModCfFilteringHelper
                 $i ++;
             }
 
+
+
             /**
              * Generate the 1st null/clear option
              * If options exist and there is a selection ($selected_array)
@@ -1232,7 +1316,8 @@ class ModCfFilteringHelper
              * But null/clear should always display for drop-down lists/select.
              */
             if ((!empty($options) || !empty($selected_array))
-	            && (in_array($disp_type, [
+	            && (
+                    in_array($disp_type, [
                     CfFilter::DISPLAY_RADIO,
                     CfFilter::DISPLAY_LINK,
                     CfFilter::DISPLAY_IMAGE_LINK,
@@ -1241,8 +1326,10 @@ class ModCfFilteringHelper
                     CfFilter::DISPLAY_COLOR_BUTTON_MULTI,
                     CfFilter::DISPLAY_BUTTON,
                     CfFilter::DISPLAY_BUTTON_MULTI
-                ]) && $disp_clear_tool == 1 && isset($selected_flt[$var_name]))
-                || $disp_type == CfFilter::DISPLAY_SELECT) {
+                ])
+                    && $disp_clear_tool == 1
+                    && isset($selected_flt[$var_name])
+                ) || $disp_type == CfFilter::DISPLAY_SELECT) {
                 $nullOption = [];
                 $nullOption['id'] = '';
                 $nullOption['active'] = true;
@@ -1278,6 +1365,9 @@ class ModCfFilteringHelper
             $filter->setOptions($options);
             // set the active tree for that filter
             $filter->setActiveTree($this->active_tree);
+
+
+
 
             /*
              * if there are active subtrees, can be autoexpanded

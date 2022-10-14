@@ -60,8 +60,9 @@ class OptionsHelper
     private $product_ids;
 
     /**
-     *
-     * @var array
+     * @var array - Массив выбранных фильтров
+     *  virtuemart_category_id => ARRAY
+     * @since 3.9
      */
     public $selected_flt;
 
@@ -231,6 +232,7 @@ class OptionsHelper
     }
 
     /**
+     * Функция прокси для получения параметров определенных фильтров
      * Proxy function to get the options of specific filters
      *
      * @param $var_name
@@ -651,6 +653,7 @@ class OptionsHelper
     }
 
     /**
+     * Получить категории Virtuemart - для опций фильтра по категориям
      * Get the categories
      *
      * @return array
@@ -662,27 +665,73 @@ class OptionsHelper
             $cahche_id = '';
             $results = array();
             $subtree_parent_category_id = false;
+            /**
+             * @var bool $displayCounterSetting Отображать счетчик возле каждой опции
+             */
             $displayCounterSetting = $this->moduleparams->get('category_flt_display_counter_results', 1);
-            $on_category_reset_others = $this->moduleparams->get('category_flt_onchange_reset', 'filters');
+            /**
+             * @var string $category_flt_onchange_reset Очищать выбор других фильтров или поисковых запросов при смене категории
+             */
+            $category_flt_onchange_reset = $this->moduleparams->get('category_flt_onchange_reset', 'filters');
+            /**
+             *
+             * @var array $selected_categories Выбранные категории в фильтре категорий
+             */
             $selected_categories = !empty($this->selected_flt['virtuemart_category_id']) ? $this->selected_flt['virtuemart_category_id'] : array();
+            /**
+             * @var array $virtuemart_shoppergroup_ids Массив групп покупателей для текущего пользователя
+             */
             $virtuemart_shoppergroup_ids = cftools::getUserShopperGroups();
+
+
+
+
             /*
+             * -------------------------------------------------------------------------------------------------------
+             * если мы должны вернуть только подкатегории
+             * это должно происходить только при навязывании соответствующей настройкой в модуле
+             * и список категорий является неотъемлемой частью, на которую не влияют другие выборки
+             *
              * if we should return only the subcats
              * this should happen only when imposed by the corresponding setting in the module
              * and the categories list is integral, unaffected by other selections
              */
-            if ($this->moduleparams->get('category_flt_only_subcats', false) &&
-                (($this->moduleparams->get('category_flt_onchange_reset', 'filters') == 'filters' && empty($this->selected_flt['q'])) ||
-                    $this->moduleparams->get('category_flt_onchange_reset', 'filters') == 'filters_keywords')) {
+            /**
+             * @var bool $category_flt_only_subcats Отображать только под-категории, когда родительская категория выбрана/посещена
+             */
+            $category_flt_only_subcats = $this->moduleparams->get('category_flt_only_subcats', false);
+            if ( $category_flt_only_subcats &&
+                (( $category_flt_onchange_reset == 'filters' && empty($this->selected_flt['q'])) ||
+                    $category_flt_onchange_reset == 'filters_keywords')) {
+                /**
+                 * @var array $subtree_parent_category_id Массив родительских категорий
+                 */
                 $subtree_parent_category_id = $this->getParentCategoryId($selected_categories);
             }
 
-            // the display order of the categories. If we display only the subcategories we do not need tree ordering.
-            $cat_disp_order = !empty($subtree_parent_category_id) && $this->moduleparams->get('categories_disp_order') == 'tree' ? 'ordering' : $this->moduleparams->get('categories_disp_order');
 
-            // if the category tree is always the same and has no countering then get a cached version
-            if (($on_category_reset_others == 'filters_keywords' || ($on_category_reset_others == 'filters')) &&
-                empty($subtree_parent_category_id) && empty($this->selected_flt['q'])) {
+            /**
+             * @var string $categories_disp_order Способ и порядок отображения категорий
+             *  - tree  - Дерево категорий
+             *  - names - В алфавитном порядке
+             */
+            $categories_disp_order = $this->moduleparams->get('categories_disp_order') ;
+
+            /**
+             * @var string $cat_disp_order Порядок отображения категорий. Если мы отображаем только подкатегории, нам не нужен порядок дерева.
+             *
+             *  the display order of the categories. If we display only the subcategories we do not need tree ordering.
+             */
+            $cat_disp_order = !empty($subtree_parent_category_id) && $categories_disp_order  == 'tree' ? 'ordering' : $categories_disp_order ;
+
+
+            /**
+             * если дерево категорий всегда одно и то же и не имеет противодействия, то получите кешированную версию
+             * if the category tree is always the same and has no countering then get a cached version
+             */
+            if (($category_flt_onchange_reset == 'filters_keywords' || ($category_flt_onchange_reset == 'filters'))
+                && empty($subtree_parent_category_id)
+                && empty($this->selected_flt['q'])) {
 
                 $disp_vm_cat = $this->moduleparams->get('category_flt_disp_vm_cat', '');
                 $excluded_vm_cat = $this->moduleparams->get('category_flt_exclude_vm_cat', '');
@@ -697,7 +746,10 @@ class OptionsHelper
                 $cahche_id .= ':' . $displayCounterSetting;
                 $cahche_id .= ':' . VM_SHOP_LANG_PRFX;
 
-                // 15 minutes if we have counter - 120 if we do not have
+                /**
+                 * @var int $cacheTime 15 минут если есть счетчик - 120 если нет
+                 * 15 minutes if we have counter - 120 if we do not have
+                 */
                 $cacheTime = $displayCounterSetting ? 15 : 120;
                 $cache = Factory::getCache('mod_cf_filtering.categories', '');
                 $cache->setCaching(true);
@@ -705,16 +757,35 @@ class OptionsHelper
                 $results = $cache->get($cahche_id);
             }
 
-            // runs when the cache is inactive or empty
+            /**
+             * запускается, когда кеш неактивен или пуст
+             * runs when the cache is inactive or empty
+             */
             if (empty($results)) {
                 $db = Factory::getDbo();
                 $query = $db->getQuery(true);
+
+                /**
+                 * Создание запроса для выбора категорий
+                 * @var JDatabaseQuery $query - запрос для выборки категорий
+                 */
                 $query = $this->buildCategoriesQuery($query, $part = false, $subtree_parent_category_id);
                 $db->setQuery($query);
                 $query = (string)$query;
+                /**
+                 * @var array $dbresults - массив с дочерними категориями
+                 */
                 $dbresults = $db->loadObjectList();
 
-                // we need the creation of levels only in trees
+                /**
+                 * @var int $category_flt_disp_type - Вид отображения Внешний вид отображения опций на страницах
+                 */
+                $category_flt_disp_type = $this->moduleparams->get('category_flt_disp_type', '1') ;
+
+
+                /**
+                 * Если нам нужно создание уровней только в деревьях /we need the creation of levels only in trees
+                 */
                 if ($cat_disp_order == 'tree') {
                     $elaborated_list = $this->createCatLevels($dbresults);
                     $results = $elaborated_list;
@@ -723,8 +794,11 @@ class OptionsHelper
                     if (!empty($subtree_parent_category_id)) {
                         $handle = 'ontop';
 
-                        // remove the parent category from top when checkboxes. Add the clear option
-                        if ($this->moduleparams->get('category_flt_disp_type', '1') == '3') {
+                        /**
+                         * удалить родительскую категорию сверху, когда установлены флажки. Добавьте четкую опцию
+                         * remove the parent category from top when checkboxes. Add the clear option
+                         */
+                        if ($category_flt_disp_type  == '3') {
                             $handle = 'remove';
                         }
                         $dbresults = $this->_handleParentCategory($subtree_parent_category_id, $dbresults, $handle);
@@ -739,44 +813,74 @@ class OptionsHelper
                     $cache->store($results, $cahche_id);
                 }
             }
+
+//            echo'<pre>';print_r( $results );echo'</pre>'.__FILE__.' '.__LINE__;
+//            die(__FILE__ .' '. __LINE__ );
+
+
             $this->options['virtuemart_category_id'] = $results;
         }
         return $this->options['virtuemart_category_id'];
     }
 
     /**
+     * Создание запроса для категорий Virtuemart
      * Build the query for the Categories
      *
      * @param JDatabaseQuery $query
      * @param boolean $part
-     * @param boolean $subtree if we should return only the subcats
+     * @param boolean $subtree Массив родительских категорий if we should return only the subcats
      * @return JDatabaseQuery The db query
      * @since 1.5.0
      */
-    public function buildCategoriesQuery(JDatabaseQuery $query, $part = false, $subtree = false)
+    public function buildCategoriesQuery(JDatabaseQuery $query, $part = false, $subtree = false): JDatabaseQuery
     {
         $where = array();
         $innerJoin = array();
+        /**
+         * @var array|bool $subtree_parent_category_id - массив родительских категорий
+         */
         $subtree_parent_category_id = false;
         $selected_categories = ! empty($this->selected_flt['virtuemart_category_id']) ? $this->selected_flt['virtuemart_category_id'] : array();
-        $returned_products=$this->componentparams->getReturnedProductsType();
-        $filtered_products=$this->componentparams->getFilteredProductsType();
+        /**
+         * @var string $returned_products тип продуктов, которые должны быть возвращены (parent | child | all)
+         */
+        $returned_products = $this->componentparams->getReturnedProductsType();
+        /**
+         * @var string $filtered_products тип продуктов, которые следует искать (parent | child | all)
+         */
+        $filtered_products = $this->componentparams->getFilteredProductsType();
+
+
 
         /*
-         * if we should return only the subcats
+         * если мы должны вернуть только подкатегории if we should return only the subcats
          */
-        if ($subtree) {
+        if ( $subtree ) {
+
             $subtree_parent_category_id = $this->getParentCategoryId($selected_categories);
         }
 
-        // the display order of the categories. If we display only the subcategories we do not need tree ordering.
+
+
+
+
+        /**
+         * @var string $cat_disp_order Порядок отображения категорий. Если мы находимся в верхнем уровне категорий и
+         * нужно отображат только подкатегории, то нам не нужен порядок дерева - и выводим по сортировке категорий.
+         * the display order of the categories. If we display only the subcategories we do not need tree ordering.
+         */
         $cat_disp_order = ! empty($subtree_parent_category_id) && $this->moduleparams->get('categories_disp_order') == 'tree' ? 'ordering' : $this->moduleparams->get('categories_disp_order');
 
-        // included categories
+        /**
+         * @var string $disp_vm_cat  Отображаемые категории  included categories
+         */
         $disp_vm_cat = $this->moduleparams->get('category_flt_disp_vm_cat', '');
-
-        // excluded categories
+        /**
+         * @var string $excluded_vm_cat  Скрываемые категории excluded categories
+         */
         $excluded_vm_cat = $this->moduleparams->get('category_flt_exclude_vm_cat', '');
+
 
         // convert to array to sanitize data
         if (! empty($disp_vm_cat)) {
@@ -796,8 +900,14 @@ class OptionsHelper
             $excluded_ids_ar = array();
         }
 
-         // counter
+
+        /**
+         * @var string $suffix category_flt
+         */
         $suffix = $this->fltSuffix['virtuemart_category_id'];
+        /**
+         * @var bool $displayCounterSetting  Отображать счетчик возле каждой опции
+         */
         $displayCounterSetting = $this->moduleparams->get($suffix . '_display_counter_results', 1);
 
         //language table
@@ -807,8 +917,17 @@ class OptionsHelper
         $innerJoin[] = "#__virtuemart_category_categories AS cx ON cx.category_child_id=vc.virtuemart_category_id ";
 
         /*
+         * считать результаты только тогда, когда
+         * $displayCounterSetting активен и является частью запроса (getActiveOptions)
+         * или когда все опции активны (настройка типа отображения)
+         * или параметр $displayCounterSetting активен и выбора нет
+         * или когда $displayCounterSetting активен и единственным выбором является категория
+         *
+         * //мы ни в коем случае не хотим запускать подсчет как в getActiveOptions, так и здесь
+         *
+         *
          * count results only when
-         * the $displayCounterSetting is active and it is a part query (getActiveOptions)
+         * the $displayCounterSetting is active, and it is a part query (getActiveOptions)
          * or when all options are active (display type setting)
          * or the $displayCounterSetting is active and there is no selection
          * or when the $displayCounterSetting is active and the only selection is a category
@@ -843,11 +962,18 @@ class OptionsHelper
             }
         }
 
-        // if not part join the category products and the products_lang in case of multi-language site
+        /**
+         * если не часть, присоединяйтесь к категории products и products_lang в случае многоязычного сайта
+         * if not part join the category products and the products_lang in case of multi-language site
+         */
         if ($displayCounterSetting || $part) {
             $parents_sql = '';
 
-            // get the parents if exist.Parents should be always displayed, otherwise the tree will be incomprehensive
+
+            /**
+             * получить родителей, если они существуют. Родители всегда должны отображаться, иначе дерево будет непонятным
+             * get the parents if exist. Parents should be always displayed, otherwise the tree will be incomprehensive
+             */
             if ($cat_disp_order == 'tree') {
                 if (! isset($db)) {
                     $db = Factory::getDbo();
@@ -856,9 +982,10 @@ class OptionsHelper
                 $myQuery->select('DISTINCT cx.category_parent_id');
                 $myQuery->from('#__virtuemart_category_categories AS cx');
                 $myQuery->innerJoin('#__virtuemart_categories AS c ON cx.category_parent_id=c.virtuemart_category_id');
-                $myQuery->where('cx.category_parent_id>0 AND c.published=1');
+                $myQuery->where('cx.category_parent_id > 0 AND c.published=1');
                 $db->setQuery($myQuery);
                 $parents = $db->loadColumn();
+
                 if (! empty($parents)) {
                     $parents = implode(',', $parents);
                     $parents_sql = " OR vc.virtuemart_category_id IN($parents)";
@@ -899,6 +1026,7 @@ class OptionsHelper
 					CASE WHEN (s.`virtuemart_shoppergroup_id` IN(" . implode(',', $this->shopperGroups) . ") OR  (s.`virtuemart_shoppergroup_id`) IS NULL) THEN 1 ELSE 0 END AS `virtuemart_shoppergroup_id`
 					FROM `#__virtuemart_product_shoppergroups` AS s
 					RIGHT JOIN #__virtuemart_product_categories ON #__virtuemart_product_categories.virtuemart_product_id =s.virtuemart_product_id
+					
 					WHERE
 					(s.`virtuemart_shoppergroup_id` IN(" . implode(',', $this->shopperGroups) . ") OR  (s.`virtuemart_shoppergroup_id`) IS NULL)
 					GROUP BY #__virtuemart_product_categories.virtuemart_product_id
@@ -910,7 +1038,9 @@ class OptionsHelper
             $query->group('cx.category_child_id');
         }
 
-        // define the categories order by and some other vars
+        /**
+         * определить порядок категорий и некоторые другие переменные / define the categories order by and some other vars
+         */
         switch ($cat_disp_order) {
             case 'ordering':
                 $orderBy = 'vc.ordering, name';
@@ -927,14 +1057,21 @@ class OptionsHelper
                 break;
         }
 
-        // where
+        /**
+         * ------------- WHERE -------------------
+         */
+        /**
+         * Если - в настройках модуля указанны отображаемые категории
+         */
         $cat_ids = implode(',', $cat_ids_ar);
         if (! empty($cat_ids)) {
             $where[] = "vc.virtuemart_category_id IN(" . $cat_ids . ")";
             //order the categories as they are written in the setting
             $orderBy = 'FIELD(vc.virtuemart_category_id,'.$cat_ids.')';
         }
-
+        /**
+         * Если - в настройках модуля указанны не отображаемые категории
+         */
         $excluded_cat_ids = implode(',', $excluded_ids_ar);
         if (! empty($excluded_cat_ids)) {
             $where[] = "vc.virtuemart_category_id NOT IN(" . $excluded_cat_ids . ")";
@@ -951,7 +1088,7 @@ class OptionsHelper
             $query->innerJoin(implode(" INNER JOIN ", $innerJoin));
         }
         if (!empty($where)) {
-            $query->where(implode(" AND ", $where));
+            $query->where( implode(" AND ", $where) );
         }
 
          // format the final query
@@ -965,15 +1102,22 @@ class OptionsHelper
         $query->select("vc.virtuemart_category_id AS id $fields");
         $query->from("#__virtuemart_categories AS vc");
         $query->order($orderBy);
+
+//        echo $query->dump() ;
+
         return $query;
     }
 
     /**
+     * Обнаруживает и возвращает родительскую категорию текущего поддерева на основе выбора
+     * Родительская категория не обязательно является фактическим родителем текущей категории,
+     * но является родителем категорий, которые должны отображаться (поддерево)
+     *
      * Detects and returns the parent category of the current subtree based on the selections
      * The parent category is not necessarily the actual parent of the cuurent category but the parent of the categories that should be displayed (subtree)
      *
      * @param array $categories
-     * @return boolean|mixed
+     * @return boolean|array Массив родительских категорий или FALSE
      * @since 2.2.2
      */
     public function getParentCategoryId(array $categories = [])
@@ -1038,15 +1182,16 @@ class OptionsHelper
     }
 
     /**
+     * Получает массив категорий  и выбранную категоию помещает в его начало /
      * Gets an array and puts an element at the start of it
      *
-     * @param int $parent_id - the id of the parent category
+     * @param int $parent_id - id родительской категории / the id of the parent category
      * @param array $categories
      * @param string $handle
      * @return array
      * @since 2.3.1
      */
-    private function _handleParentCategory($parent_id, array $categories = [], $handle = 'ontop')
+    private function _handleParentCategory(int $parent_id, array $categories = [], string $handle = 'ontop')
     {
         $newArray = array();
         foreach ($categories as $category) {
@@ -1073,13 +1218,14 @@ class OptionsHelper
     }
 
     /**
+     * Установите категории на уровни и расположите их соответствующим образом
      * Set categories to levels and order them appropriately
      *
      * @param array $categArray
      * @return array categories
      * @since 1.0
      */
-    public function createCatLevels($categArray)
+    public function createCatLevels(array $categArray): array
     {
         if (empty($categArray)) {
             return [];
@@ -1094,7 +1240,9 @@ class OptionsHelper
             $cat_ids_ar = ArrayHelper::toInteger($cat_ids_ar);
         }
 
-        // excluded categories
+        /**
+         * @var string $excluded_vm_cat Скрываемые категории / excluded categories
+         */
         $excluded_vm_cat = $this->moduleparams->get('category_flt_exclude_vm_cat', '');
 
         // convert to array to sanitize data
@@ -1104,8 +1252,15 @@ class OptionsHelper
                 $excluded_ids_ar = ArrayHelper::toInteger($excluded_ids_ar);
         } else
             $excluded_ids_ar = array();
-
+        /**
+         *
+         * @var string $cat_disp_order Способ и порядок отображения категорий
+         */
         $cat_disp_order = $this->moduleparams->get('categories_disp_order');
+
+//        echo'<pre>';print_r( $cat_disp_order );echo'</pre>'.__FILE__.' '.__LINE__;
+//        die(__FILE__ .' '. __LINE__ );
+
 
         // create the tree
         if (empty($cat_ids_ar) && $cat_disp_order == 'tree') {

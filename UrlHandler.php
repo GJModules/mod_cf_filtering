@@ -99,6 +99,7 @@ class UrlHandler
         $results_trigger=$this->moduleParams->get('results_trigger','sel');
 
         if ($var_name == 'virtuemart_category_id') {
+            // Очищать выбор других фильтров или поисковых запросов при смене категории
             $on_category_reset_others = $this->moduleParams->get('category_flt_onchange_reset', 'filters');
             if ($on_category_reset_others) {
                 if (! empty($selected_filters['virtuemart_category_id'])) {
@@ -115,11 +116,16 @@ class UrlHandler
                 $selected_filters['virtuemart_category_id'] = $this->getHiddenCategory();
             }
         }
+        
 
 
-
+        /**
+         * @var string $dependency_direction Зависимость направления
+         */
+        $dependency_direction   = $this->moduleParams->get('dependency_direction', 't-b')  ;   
+        // В случае зависимости сверху-снизу выберите, что этот фильтр должен использовать
         // In case of dependency top-bottom get the selected that this filter should use
-        if ($this->moduleParams->get('dependency_direction', 't-b') == 't-b')
+        if ( $dependency_direction == 't-b')
         {
             if (isset($this->selected_fl_per_flt[$var_name]))
             {
@@ -128,7 +134,9 @@ class UrlHandler
             {
                 $q_array = [];
             }
-        } // On category selection clear others
+        }
+        // При выборе категории очистить другие
+        // On category selection clear others
         elseif ($on_category_reset_others)
         {
             $q_array['virtuemart_category_id'] = $categ_array;
