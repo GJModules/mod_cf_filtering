@@ -25,7 +25,8 @@ $element_id = $display_key . '_elid0';
 
 ?>
 <span class="cf_clear">
-    <a href="<?= $option->option_sef_url->sef_url ?>" id="<?php echo $element_id,'_a'?>"
+    <a href="<?= $option->option_sef_url->sef_url ?>"
+       id="<?php echo $element_id,'_a'?>"
        class="cf_option cf_clear <?= $class_no_ajax ?>"
        data-module-id="<?php echo $module->id?>" rel="nofollow">
         <?php echo $option->label?>

@@ -14,8 +14,9 @@ if (!defined('DEV_IP')) {
 use Joomla\CMS\Cache\Cache;
 use Joomla\CMS\Factory;
 
-
-
+JLoader::registerNamespace( 'GNZ11' , JPATH_LIBRARIES . '/GNZ11' , $reset = false , $prepend = false , $type = 'psr4' );
+JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
+JLoader::register('seoTools_uri' , JPATH_ROOT .'/components/com_customfilters/include/seoTools_uri.php');
 JFactory::getDocument()->addStyleDeclaration('
     body{
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important ; 
