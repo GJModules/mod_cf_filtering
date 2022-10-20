@@ -58,7 +58,21 @@ $element_id = $display_key . '_elid' . $option->id;
        class="cf_option <?= $class_no_ajax ?> <?= $option->selected ? 'cf_sel_opt' : '', ' ', $opt_class ?>"
        data-module-id="<?php echo $module->id ?>"
         <?= $params->get('indexfltrs_by_search_engines', 0) == false ? 'rel="nofollow"' : '' ?>>
+        <?php
+
+        
+        preg_match_all("/{(.*?)}/", $option->label,$out, PREG_PATTERN_ORDER);
+        $i = 0;
+        foreach ($out[0] as $value) {
+
+            $option->label = str_replace($value, JText::_($out[1][$i]), $option->label);
+            $i++;
+        }
+        ?>
         <?php echo $option->label ?>
+        
+
+
     </a>
 </span>
 <?php

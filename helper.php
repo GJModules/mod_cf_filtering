@@ -873,10 +873,6 @@ class ModCfFilteringHelper
 	    $selected_filters = $this->getSelectedFilters();
 	    $this->urlHandler = new UrlHandler( $this->module, $selected_filters);
         $seoTools = new seoTools();
-    
-
-
-
 
 		$optionsFilterArr = [];
 		// Loop Filters
@@ -884,6 +880,9 @@ class ModCfFilteringHelper
 	    {
 
 		    $Options = $filter->getOptions() ;
+
+
+
 			// Loop Option
             foreach ( $Options as &$option)
 		    {
@@ -904,13 +903,11 @@ class ModCfFilteringHelper
 			    $optionsFilterArr[] = $option ;
 			}#END FOREACH $Options
 
+
 		    // Устанавливаем Опции фильтра
 		    $filter->setOptions( $Options );
 
 		}#END FOREACH
-
-
-
 
 
 	    $seoTools->updateSeoTable( $optionsFilterArr );
