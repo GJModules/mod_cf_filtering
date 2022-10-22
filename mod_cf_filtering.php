@@ -71,15 +71,6 @@ catch (\Exception $e)
     die(__FILE__ .' '. __LINE__ );
 }
 
-
-
-
-
-
-
-
-
-
 require_once dirname(__FILE__) . '/helper.php';
 
 
@@ -119,6 +110,10 @@ try
 
 
 	$filters          = $modObj->getFilters();
+
+
+
+
 	$selected_filters = $modObj->getSelectedFilters();
 	$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 	$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));

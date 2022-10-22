@@ -306,9 +306,8 @@ class ModCfFilteringHelper
 
 
 	/**
-     * The entry point for the filters generation
-     *
      * Точка входа для генерации фильтров
+     * The entry point for the filters generation
      *
      * @return CfFilter[]
      * @throws Exception
@@ -334,6 +333,8 @@ class ModCfFilteringHelper
         // the selected filters' options array;
         // массив опций выбранных фильтров;
         $selected_flt = \CfInput::getInputs();
+
+
 
         // selected filters after encoding the output
         // выбранные фильтры после кодирования вывода
