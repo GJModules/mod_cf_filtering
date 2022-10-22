@@ -1,6 +1,6 @@
 <updates>
     <update>
-        <name>Mod cf Filtering by Gartes</name>
+        <name><![CDATA[Mod cf Filtering by Gartes]]></name>
         <description><![CDATA[Модуль вывода фильтров для VM]]></description>
         <type>module</type>
         <element>mod_cf_filtering</element>
