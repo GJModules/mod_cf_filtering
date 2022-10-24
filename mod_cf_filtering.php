@@ -17,6 +17,21 @@ use Joomla\CMS\Factory;
 JLoader::registerNamespace( 'GNZ11' , JPATH_LIBRARIES . '/GNZ11' , $reset = false , $prepend = false , $type = 'psr4' );
 JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
 JLoader::register('seoTools_uri' , JPATH_ROOT .'/components/com_customfilters/include/seoTools_uri.php');
+
+$paramsComponent = JComponentHelper::getParams('com_customfilters');
+
+$debug_on = $paramsComponent->get('debug_on' , 0 ) ;
+if (!defined('CF_FLT_DEBUG')) {
+	define('CF_FLT_DEBUG',     $debug_on );
+	if ( CF_FLT_DEBUG )
+	{
+		JLoader::register('seoTools_logger' , JPATH_ROOT .'/components/com_customfilters/include/seoTools_logger.php');
+		seoTools_logger::instance();
+	}#END IF
+}
+
+
+
 JFactory::getDocument()->addStyleDeclaration('
     body{
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important ; 
