@@ -70,14 +70,7 @@ if(empty($key)) {
 
 	    $Options = $filter->getOptions() ;
 
-	    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-	    {
 
-//		    echo'<pre>';print_r( $Options );echo'</pre>'.__FILE__.' '.__LINE__;
-//		    echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//		    die(__FILE__ .' '. __LINE__ );
-
-	    }
 
 
     }
@@ -92,7 +85,13 @@ if(empty($key)) {
             $element_id = $display_key . '_elid' . $option->id;
             $option_url = \JRoute::_(  $urlHandler->getURL($filter, $option->id, $option->type) );
 
+	        if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	        {
 
+		        echo'<pre>';print_r( $option );echo'</pre>'.__FILE__.' '.__LINE__;
+		        die(__FILE__ .' '. __LINE__ );
+
+	        }
 
             
             if (

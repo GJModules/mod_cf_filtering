@@ -596,8 +596,11 @@ var customFilters = {
                 let keywords = response.text.match(/<meta name="keywords" content="([\s\S]*?)" \/>/i);
                 if (keywords) {
                     // set a new keywords
+                    var metaKeywords = document.querySelector('meta[name="keywords"]');
+                    if (metaKeywords){
+                        metaKeywords.setAttribute("content", keywords[1]);
+                    }
 
-                    document.querySelector('meta[name="keywords"]').setAttribute("content", keywords[1]);
                 }
 
                 let description = response.text.match(/<meta name="description" content="([\s\S]*?)" \/>/i);
@@ -647,6 +650,7 @@ var customFilters = {
                     customFilters.setWindowState(url);
                 }
                 try {
+                    // Обновление модуля на странице
                     customFilters.updateDependentModules(module_id);
                 } catch (e) {
                     console.error(e);
@@ -742,10 +746,9 @@ var customFilters = {
     },
 
     /**
-     *  Update dependent modules
-     *
+     * Обновить зависимые модули / Update dependent modules
+     * @param module_id
      * @returns {boolean}
-     * @since 2.8.2
      */
     updateDependentModules: function (module_id) {
         //load the breadcrumbs modules

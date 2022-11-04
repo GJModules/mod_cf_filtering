@@ -6,13 +6,29 @@
  * @license        GNU General Public License version 2 or later; see LICENSE.txt
  */
 
+use Joomla\CMS\Cache\Cache;
+use Joomla\CMS\Factory;
+
+defined('_JEXEC') or die(); // no direct access
+
 if (!defined('DEV_IP')) {
 	define('DEV_IP',     '***.***.***.***');
 }
 
-// no direct access
-use Joomla\CMS\Cache\Cache;
-use Joomla\CMS\Factory;
+/**
+ * Получить версию модуля
+ */
+$xml_file = JPATH_ROOT .  '/modules/mod_cf_filtering/mod_cf_filtering.xml' ;
+$dom = new DOMDocument("1.0", "utf-8");
+$dom->load($xml_file);
+/**
+ * @var string $__v version mod_cf_filtering
+ */
+$__v =   $dom->getElementsByTagName('version')->item(0)->textContent;
+
+
+
+
 
 JLoader::registerNamespace( 'GNZ11' , JPATH_LIBRARIES . '/GNZ11' , $reset = false , $prepend = false , $type = 'psr4' );
 JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
@@ -48,7 +64,7 @@ if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 }#END IF
 
 
-defined('_JEXEC') or die();
+
 
 
 
@@ -63,6 +79,15 @@ JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/incl
 $doc = Factory::getDocument();
 $profiler = \JProfiler::getInstance('PRO_Application - module');
 $profiler->mark('Start Module');
+
+if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+{
+//	echo'<pre>';print_r( $module );echo'</pre>'.__FILE__.' '.__LINE__;
+//	die(__FILE__ .' '. __LINE__ );
+
+}
+
+
 //load dependencies
 require_once dirname(__FILE__) . '/bootstrap.php';
 
@@ -91,10 +116,14 @@ require_once dirname(__FILE__) . '/helper.php';
 
 
 //$doc->addScript(JURI::root().'modules/mod_cf_filtering/assets/general.js' , ['mime' => 'text/javascript'], ['defer' => true]);
-$doc->addScript(JURI::root().'modules/mod_cf_filtering/assets/general-uncompressed.js' , ['mime' => 'text/javascript'], ['defer' => true]);
 
-$doc->addScript(JURI::root().'components/com_virtuemart/assets/js/cvfind.js', ['mime' => 'text/javascript']);
-$doc->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css');
+$urlGeneralUncompressed = JURI::root().'modules/mod_cf_filtering/assets/general-uncompressed.js' . '?i=' . $__v  ;
+$doc->addScript( $urlGeneralUncompressed , ['mime' => 'text/javascript'], ['defer' => true]);
+
+
+
+$doc->addScript(JURI::root().'components/com_virtuemart/assets/js/cvfind.js' . '?i=' . $__v , ['mime' => 'text/javascript']);
+$doc->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css' . '?i=' . $__v );
 
 
 

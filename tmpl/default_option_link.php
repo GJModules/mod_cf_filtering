@@ -57,7 +57,7 @@ $element_id = $display_key . '_elid' . $option->id;
        id="<?php echo $element_id, '_a' ?>"
        class="cf_option <?= $class_no_ajax ?> <?= $option->selected ? 'cf_sel_opt' : '', ' ', $opt_class ?>"
        data-module-id="<?php echo $module->id ?>"
-        <?= $params->get('indexfltrs_by_search_engines', 0) == false ? 'rel="nofollow"' : '' ?>>
+        <?= !$params->get('indexfltrs_by_search_engines', 0) ? 'rel="nofollow"' : '' ?> >
         <?php
 
         
