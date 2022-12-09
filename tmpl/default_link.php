@@ -17,6 +17,7 @@ if(empty($key)) {
 }
 
 
+
 ?>
 
 <ul class="cf_filters_list" id="cf_list_<?php echo $key,'_',$module->id?>">
@@ -31,6 +32,14 @@ if(empty($key)) {
         $display_key = $key.'_'.$module->id;
         $element_id = $display_key . '_elid' . $option->id;
         $option_url = \JRoute::_($urlHandler->getURL($filter, $option->id, $option->type));
+
+        if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+        {
+            echo'<pre>';print_r( $option_url );echo'</pre>'.__FILE__.' '.__LINE__;
+            die(__FILE__ .' '. __LINE__ );
+
+        }
+
 
         //create classes for the category tree
         if ($key == 'virtuemart_category_id' && $params->get('categories_disp_order','names') == 'tree' && (int)$option->id > 0 && isset($option->cat_tree)) {
@@ -53,7 +62,9 @@ if(empty($key)) {
 
                 //inactive option
                 if(!$option->active) {?>
-                    <span class="cf_option cf_disabled_opt <?php echo $opt_class?>"><?php echo $option->label?></span>
+                    <span class="cf_option cf_disabled_opt <?php echo $opt_class?>">
+                        <?= $option->label?>
+                    </span>
                     <?php
                 }
 
@@ -61,9 +72,10 @@ if(empty($key)) {
                 else{
                     require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_link');
 
-                    //we need to keep the selected in the form
+                    //нам нужно сохранить выбранное в форме
+                    // we need to keep the selected in the form
                     if($option->selected){?>
-                        <input type="hidden" name="<?php echo $key?>[]" value="<?php echo $option->id?>" />
+                        <input type="hidden" name="<?= $key?>[]" value="<?= $option->id?>" />
                     <?php
                     }
                 }?>

@@ -11,24 +11,12 @@ use Joomla\CMS\Factory;
 
 defined('_JEXEC') or die(); // no direct access
 
-if (!defined('DEV_IP')) {
-	define('DEV_IP',     '***.***.***.***');
-}
+if (!defined('DEV_IP'))  define('DEV_IP',     '***.***.***.***');
 
-/**
- * Получить версию модуля
- */
-$xml_file = JPATH_ROOT .  '/modules/mod_cf_filtering/mod_cf_filtering.xml' ;
-$dom = new DOMDocument("1.0", "utf-8");
-$dom->load($xml_file);
-/**
- * @var string $__v version mod_cf_filtering
- */
-$__v =   $dom->getElementsByTagName('version')->item(0)->textContent;
+//load dependencies
+require_once dirname(__FILE__) . '/bootstrap.php';
 
-
-
-
+$__v = ModCfFilteringHelper::getModuleVersion();
 
 JLoader::registerNamespace( 'GNZ11' , JPATH_LIBRARIES . '/GNZ11' , $reset = false , $prepend = false , $type = 'psr4' );
 JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
@@ -55,41 +43,34 @@ JFactory::getDocument()->addStyleDeclaration('
      
 ');
 
-if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-{
 
-	$config = \Joomla\CMS\Factory::getConfig();
-	$config->set('error_reporting' , 'development' );
-	$config->set('debug' , 1 );
-}#END IF
-
-
-
-
-
-
-
-JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
 
 /**
  * @var Joomla\Registry\Registry $params
- * @var stdClass $module
- * @var ModCfFilteringHelper  $modObj
+ * @var stdClass                 $module
+ * @var ModCfFilteringHelper     $FilteringHelper
  */
 $doc = Factory::getDocument();
 $profiler = \JProfiler::getInstance('PRO_Application - module');
 $profiler->mark('Start Module');
 
-if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-{
-//	echo'<pre>';print_r( $module );echo'</pre>'.__FILE__.' '.__LINE__;
-//	die(__FILE__ .' '. __LINE__ );
 
+
+try
+{
+	$FilteringHelper = new ModCfFilteringHelper($params, $module);
+}
+catch (\Exception $e)
+{
+	// Executed only in PHP 5, will not be reached in PHP 7
+	echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
+	echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
+	die(__FILE__ .' '. __LINE__ );
 }
 
+//require_once dirname(__FILE__) . '/helper.php';
 
-//load dependencies
-require_once dirname(__FILE__) . '/bootstrap.php';
+
 
 \VmConfig::loadConfig();
 JText::script('MOD_CF_FILTERING_INVALID_CHARACTER');
@@ -99,29 +80,10 @@ JText::script('MOD_CF_FILTERING_MIN_CHARACTERS_LIMIT');
 $jlang = \JFactory::getLanguage();
 $jlang->load('com_customfilters');
 $jlang->load('com_virtuemart');
-try
-{
-	$modObj = new \ModCfFilteringHelper($params, $module);
-}
-catch (\Exception $e)
-{
-    // Executed only in PHP 5, will not be reached in PHP 7
-    echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
-    echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
-    die(__FILE__ .' '. __LINE__ );
-}
-
-require_once dirname(__FILE__) . '/helper.php';
-
-
 
 //$doc->addScript(JURI::root().'modules/mod_cf_filtering/assets/general.js' , ['mime' => 'text/javascript'], ['defer' => true]);
-
 $urlGeneralUncompressed = JURI::root().'modules/mod_cf_filtering/assets/general-uncompressed.js' . '?i=' . $__v  ;
 $doc->addScript( $urlGeneralUncompressed , ['mime' => 'text/javascript'], ['defer' => true]);
-
-
-
 $doc->addScript(JURI::root().'components/com_virtuemart/assets/js/cvfind.js' . '?i=' . $__v , ['mime' => 'text/javascript']);
 $doc->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css' . '?i=' . $__v );
 
@@ -137,28 +99,57 @@ try
 
 
 
-
-	// Code that may throw an Exception or Error.
-	/*$cacheParams = new stdClass;
-	$cacheParams->cachemode = 'safeuri';
-	$cacheParams->class = 'ModCfFilteringHelper';
-	$cacheParams->method = 'ModuleInit';
-	$cacheParams->methodparams = $params;
-	$cacheParams->modeparams = array(
-		'id' => 'int'  ,
-		//'module_type' => $module_type
+	// Настройуи кеша
+	$options = array(
+		'defaultgroup' => 'mod_cf_filtering_data',
+		'browsercache' => false,
+		'caching'      => 1,
 	);
-	$params->set('cache' , 1);// Устанавливаем принудительное включение CACHE
-	echo \Joomla\CMS\Helper\ModuleHelper::moduleCache($module , $params , $cacheParams);
-	return ;*/
+	// ключ кеша страницы
+	$parts[] = \JUri::getInstance()->toString();
+	$key = md5(serialize($parts));
+
+	$Cache = \Joomla\CMS\Cache\Cache::getInstance('output', $options);
+	$dataCache = $Cache->get( $key );
+
+	if ( !$dataCache  )
+	{
+		/**
+		 * Получить все фильтры с опциями для модуля
+		 */
+		$filters          = $FilteringHelper->getFilters();
+		$scriptVars = $FilteringHelper->getScriptVars();
+
+		$dataCache = [
+			'filters' => $filters ,
+			'scriptVars' => $scriptVars ,
+		];
+		$Cache->store( $dataCache , $key );
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+			$profiler->mark('GetDataNoCache');
+			$__timeDev = $profiler->getBuffer();
+			echo'<pre>';print_r( $__timeDev );echo'</pre>'.__FILE__.' '.__LINE__;
+			
+			echo'<pre style="color:red">';print_r( 'Данные генерировались NEW' );echo'</pre>';
+		}
+	}else{
+		$filters = $dataCache['filters'];
+		// Устанавливаем данные из кеша
+		$FilteringHelper->setScriptVars( $dataCache['scriptVars'] );
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+			$profiler->mark('GetDataCache');
+			$__timeDev = $profiler->getBuffer();
+			echo'<pre>';print_r( $__timeDev );echo'</pre>'.__FILE__.' '.__LINE__;
+			echo'<pre style="color:green">';print_r( 'Данные взяты из Cache' );echo'</pre>';
+		}
+
+	}#END IF
+	 
 
 
-	$filters          = $modObj->getFilters();
-
-
-
-
-	$selected_filters = $modObj->getSelectedFilters();
+	$selected_filters = $FilteringHelper->getSelectedFilters();
 	$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 	$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
 
@@ -168,7 +159,7 @@ try
 
 
 
-	if (   !$htmlData = $cache->get($cacheId))
+	if (   !$htmlData = $cache->get($cacheId) )
 	{
 		ob_start();
 
@@ -192,6 +183,12 @@ try
 catch (\Error $e)
 {
 	// Executed only in PHP 5, will not be reached in PHP 7
+	echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
+	echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
+	die(__FILE__ .' '. __LINE__ );
+}
+catch ( Exception $e )
+{
 	echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
 	echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
 	die(__FILE__ .' '. __LINE__ );

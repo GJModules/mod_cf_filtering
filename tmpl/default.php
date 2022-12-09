@@ -35,11 +35,16 @@ $component = $jinput->get('option', '', 'cmd');
 $menu_params = \cftools::getMenuparams();
 $Itemid = $menu_params->get('cf_itemid', '');
 $results_trigger = $params->get('results_trigger', 'sel');
-$results_loading_mode = $params->get('results_loading_mode', 'http');
+
+/**
+ * @var string $results_loading_mode - Режим загрузки результатов (ajax|http)
+ */
+$results_loading_mode = $params->get('results_loading_mode','ajax');
+
 $jconfig = Factory::getConfig();
 $issef = $jconfig->get('sef');
 $scriptFiles = [];
-$scriptProcesses = $modObj->getScriptProcesses();
+$scriptProcesses = $FilteringHelper->getScriptProcesses();
 
 require_once JPATH_BASE . '/modules/mod_cf_filtering/scriptHelper.php';
 
@@ -138,43 +143,19 @@ if( $view != 'module' ){?>
 
 
                     /*
+                     * загружать параметры через подмакеты.
+                      * Фильтр может иметь более 1 дисплея (например, входы диапазона и ползунок вместе)
                      * load the options through sub-layouts.
                      * A filter can have more than 1 display (e.g. range inputs and slider together)
                      */
                     $filtersDisplay = $filter->getDisplay();
 
-                    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-                    {
-//	                    echo'<pre>';print_r( $filtersDisplay );echo'</pre>'.__FILE__.' '.__LINE__;
-//	                    echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//	                    die(__FILE__ .' '. __LINE__ );
-
-                    }
 
                     foreach ( $filtersDisplay as $display) {
                         $layout = array_search($display, $filter->displays);
                         ?>
                         <!-- Start layout <?= $layout ?> -->
                         <?php
-
-	                    /*if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-	                    {
-                            // Ссылка фильтра - которая содержит только категорию
-		                    $option_url = \JRoute::_( $urlHandler->getURL($filter, $option->id, $option->type ));
-
-		                    $Options = $filter->getOptions() ;
-
-
-
-
-//		                    echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                    echo'<pre>';print_r( $option );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                    echo'<pre> Options';print_r( $Options );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                    echo'<pre>';print_r( $option_url );echo'</pre>'.__FILE__.' '.__LINE__;
-
-//		                    die(__FILE__ .' '. __LINE__ );
-
-	                    }*/
 
 	                    $profiler->mark('Start require default_'.$layout .' - default.php');
                         require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_'.$layout);
@@ -263,9 +244,11 @@ if ($view != 'module')
     </div>
 <?php }
 
+
+
 //Scripts
 //load the VM scripts and styles in pages other than VM and CF when ajax is used
-if($params->get('results_loading_mode','ajax')=='ajax' && $component != 'com_customfilters' || $component!='com_virtuemart' || ($component=='com_virtuemart' && $view!='category')){
+if( $params->get('results_loading_mode','ajax')=='ajax' && $component != 'com_customfilters' || $component!='com_virtuemart' || ($component=='com_virtuemart' && $view!='category')){
     \cftools::loadScriptsNstyles();
 }
 
@@ -276,19 +259,19 @@ if (
     $scriptProcesses[] = "customFilters.assignEvents(" . $module->id . ");";
 }
 
-$styles = $modObj->getStyles();
+$styles = $FilteringHelper->getStyles();
 if (!empty($styles)) {
     $document->addStyleDeclaration($styles);
 }
 
-$scriptVars = $modObj->getScriptVars();
+$scriptVars = $FilteringHelper->getScriptVars();
 
 
 if (!empty($scriptVars)) {
     $script_var_counter = count($scriptVars);
     $j = 1;
     $script = '
-		if(typeof customFiltersProp=="undefined")customFiltersProp=new Array();
+		if(typeof customFiltersProp=="undefined") customFiltersProp = new Array();
 		customFiltersProp[' . $module->id . ']={';
     foreach ($scriptVars as $varName => $value) {
         $script .= "$varName:'$value'";
@@ -299,8 +282,11 @@ if (!empty($scriptVars)) {
     }
     $script .= '};';
 
-//    echo'<pre>';print_r( $script );echo'</pre>'.__FILE__.' '.__LINE__;
-//    die(__FILE__ .' '. __LINE__ );
+    /*if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+    {
+            echo'<pre>';print_r( $script );echo'</pre>'.__FILE__.' '.__LINE__;
+        die(__FILE__ .' '. __LINE__ );
+    }*/
 
 
     $document->addScriptDeclaration($script);

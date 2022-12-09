@@ -95,9 +95,12 @@ class ModCfFilteringHelper
     public $stylesDeclaration = '';
 
     /**
+     * содержит любую переменную, которая будет передана скрипту
+     * ---
      * contains any variable which will be passed to the script
      *
      * @var array
+     * @since 3.9
      */
     public $scriptVars =[];
 
@@ -109,9 +112,11 @@ class ModCfFilteringHelper
     public $scriptProcesses = [];
 
     /**
-     * contains the suffixes of the filters
-     *
+     * Содержит суффиксы фильтров
+     * ---
+     * Contains the suffixes of the filters
      * @var array
+     * @since 3.9
      */
     protected $fltSuffix = array(
         'q' => 'keyword_flt',
@@ -150,11 +155,13 @@ class ModCfFilteringHelper
      */
     public $results_trigger;
 
-    /**
-     * reults loading mode (http or ajax)
-     *
-     * @var string
-     */
+
+	/**
+	 * @var string  Режим загрузки результатов ajax | http
+	 *              ---
+	 *              reults loading mode (http or ajax)
+	 * @since 3.9
+	 */
     public $results_loading_mode;
 
     /**
@@ -211,7 +218,8 @@ class ModCfFilteringHelper
         $doc = Factory::getDocument();
         $Itemid = $this->menu_params->get('cf_itemid', '');
         $this->results_trigger = $params->get('results_trigger', 'sel');
-        $this->results_loading_mode = $params->get('results_loading_mode', 'ajax');
+
+		$this->results_loading_mode = $params->get('results_loading_mode', 'ajax');
         $this->direction = $doc->getDirection();
         $this->scriptVars['base_url'] = Uri::base();
         $this->scriptVars['Itemid'] = $Itemid;
@@ -307,14 +315,33 @@ class ModCfFilteringHelper
 
 	/**
      * Точка входа для генерации фильтров
+	 * ---
      * The entry point for the filters generation
      *
      * @return CfFilter[]
      * @throws Exception
      * @since 1.0
      */
-    public function getFilters()
+    public function getFilters():array
     {
+	    /**
+	     * @var string $dependency_dir Зависимость направления
+	     */
+	    $dependency_dir = $this->moduleparams->get('dependency_direction', 'all');
+	    /**
+	     * Режим отладки -- профилировщик для получения показателей производительности
+	     * ---
+	     * @var int $profilerParam profiler to get performance metrics
+	     */
+	    $profilerParam = $this->moduleparams->get('cf_profiler', 0);
+	    /**
+	     * Порядок отображения фильтров - в модуле сортируемое поле
+	     * ---
+	     * @var array $moduleParamsFilterList
+	     */
+	    $moduleParamsFilterList = $this->moduleparams->get('filterlist', '');
+
+		// Определяем - способ обновления - загрузки модуля
         if ($this->results_loading_mode == 'ajax' || $this->results_trigger == 'btn') {
             $loadAjaxModule = true;
         }
@@ -322,43 +349,57 @@ class ModCfFilteringHelper
             $loadAjaxModule = false;
         }
 
-
         $this->scriptVars['loadModule'] = $loadAjaxModule;
-        $dependency_dir = $this->moduleparams->get('dependency_direction', 'all');
 
-        // profiler to get performance metrics
-        // профилировщик для получения показателей производительности
-        $profilerParam = $this->moduleparams->get('cf_profiler', 0);
-
-        // the selected filters' options array;
-        // массив опций выбранных фильтров;
+	    /**
+	     * Массив опций выбранных опций фильтров
+	     * ---
+	     * @var array $selected_flt the selected filters' options array;
+	     */
         $selected_flt = \CfInput::getInputs();
 
-
-
-        // selected filters after encoding the output
-        // выбранные фильтры после кодирования вывода
+	    /**
+	     * Выбранные фильтры после кодирования вывода - строки кодируются в BIN
+	     */
         $this->selected_flt = \CfOutput::getOutput($selected_flt, true);
 
-        // holds the selections which should be used for each filter,
-        // when the dependency is from-top to bottom
+	    /**
+	     * Содержит выборки, которые должны использоваться для каждого фильтра, когда зависимость идет сверху вниз
+	     * holds the selections which should be used for each filter, when the dependency is from-top to bottom
+	     *
+	     * -- DEFAULT - "all"
+	     */
         if (count($this->selected_flt) > 0 && $dependency_dir == 't-b') {
             $this->selected_fl_per_flt = \CfOutput::getOutput( CfInput::getInputsPerFilter($this->module), true, true);
         }
 
-        // check if reset is active
+	    /**
+	     * check if reset is active
+	     */
         $this->reset = Factory::getApplication()->input->get('reset', 0, 'int');
 
+	    /**
+	     * @var \DisplayManager $displayManager
+	     */
         $displayManager = new \DisplayManager($this->moduleparams, $this->selected_flt);
 
-        // define the filters order
-        $filters_order = json_decode(str_replace("'", '"', $this->moduleparams->get('filterlist', '')));
-        $filters_order = (array) $filters_order;
-
-        if (empty($filters_order) || ! in_array('stock', $filters_order) || count($filters_order) != count($this->fltSuffix)){
+		
+	    /**
+	     * Порядок отображения фильтров
+	     * ---
+	     * define the filters order
+	     * ---
+	     * @var array $filters_order
+	     */
+        $filters_order = (array) json_decode(str_replace("'", '"', $moduleParamsFilterList ));
+		// Если что-то не так -- устанавливаем принудительно по умолчанию
+        if ( empty($filters_order) || !in_array('stock', $filters_order) || count($filters_order) != count($this->fltSuffix)){
             $filters_order = array('q', 'virtuemart_category_id', 'virtuemart_manufacturer_id', 'price', 'stock', 'custom_f');
         }
 
+	    /**
+	     * Перебираем типы фильтров в соответствии с параметрами настроек модуля - (Порядок отображения фильтров)
+	     */
         foreach ($filters_order as $filter_key) {
 
             switch ($filter_key) {
@@ -673,7 +714,7 @@ class ModCfFilteringHelper
                     }
                     break;
 
-                //stock filter
+                // --Stock filter--
                 case 'stock':
                     if ($displayManager->getDisplayControl('stock_flt')) {
                         $this->display[$filter_key] = $this->moduleparams->get('stock_flt_disp_type', 4);
@@ -700,21 +741,24 @@ class ModCfFilteringHelper
 
                     if ($displayManager->getDisplayControl('custom_flt')) {
 
-                        $custom_flt = cftools::getCustomFilters($this->moduleparams);
+	                    $custom_flt = cftools::getCustomFilters( $this->moduleparams );
 
                         $cf_range_size = 6;
                         $cf_range_maxlength = 5;
 
                         // get the options
                         foreach ($custom_flt as $cf) {
-                            /*
-                             * check if it should be displayed based on the filter's settings
-                             * проверьте, должно ли оно отображаться на основе настроек фильтра
-                             */
-                            if (! $displayManager->displayCustomFilter($cf)) {
-                                continue;
-                            }
 
+							/**
+                             * Проверьте, должно ли оно отображаться на основе настроек модуля фильтра
+                             * Если нет - пропускаем
+                             * check if it should be displayed based on the filter's settings
+                             *
+                             */
+	                        if ( !$displayManager->displayCustomFilter( $cf ) )
+	                        {
+		                        continue;
+	                        }
 
                             $var_name = "custom_f_$cf->custom_id";
                             $key = $var_name;
@@ -735,8 +779,6 @@ class ModCfFilteringHelper
                                 }
                             }
 
-
-
                             // selectable types
                             if ( strpos($cf->disp_type, CfFilter::DISPLAY_INPUT_TEXT) === false
 	                            && strpos($cf->disp_type, CfFilter::DISPLAY_RANGE_SLIDER) === false
@@ -744,7 +786,9 @@ class ModCfFilteringHelper
                             {
                                 $this->display[$key] = $cf->disp_type;
 
-                                // Создаем Поля - со значениями getFilter
+	                            /**
+	                             * Создание блоков фильтров Custom Field
+	                             */
                                 $filter = $this->getFilter($var_name, Text::_($cf->custom_title), true);
 	                            if(!isset($filter)) continue;
 
@@ -912,26 +956,30 @@ class ModCfFilteringHelper
 
 
 	    $seoTools->updateSeoTable( $optionsFilterArr );
-	    
+
+
 
         return $this->filters;
     }
 
-    /**
-     * Создает фильтр со всеми основными свойствами, включая его параметры.
-     *
-     * Creates a filter with all the basic properties including it's options
-     *
-     *
-     * @param   string The name of the variable which will be used in the filtering form
-     * @param   string The header of the filter
-     * @param   boolean Indicates if a filter contains strings. In this case they should be encoded
-     * @return  CfFilter
-     * @throws Exception
-     * @author  Sakis Terz
-     * @since   1.0
-     */
-    public function getFilter($var_name , $header = '', $encoded_var = false)
+	/**
+	 * Создает фильтр со всеми основными свойствами, включая его параметры.
+	 * ---
+	 * Creates a filter with all the basic properties including its options
+	 *
+	 * @param   string   $var_name     Имя переменной, которая будет использоваться в форме фильтрации etc/ "custom_f_29"
+	 *                                 The name of the variable which will be used in the filtering form
+	 * @param   string   $header       Заголовок фильтра - Название custom field etc/ "Верхний рез"
+	 *                                 The header of the filter
+	 * @param   boolean  $encoded_var  Указывает, содержит ли фильтр строки. В этом случае они должны быть закодированы
+	 *                                 Indicates if a filter contains strings. In this case they should be encoded
+	 *
+	 * @return  CfFilter|void
+	 * @throws Exception
+	 * @since   1.0
+	 * @author  Sakis Terz
+	 */
+    public function getFilter( string $var_name , string $header = '', bool $encoded_var = false)
     {
 
         $activeOptions = [];
@@ -943,22 +991,36 @@ class ModCfFilteringHelper
         $selected_array = [];
         $maxLevel = 0;
 
-        // add the counter settings
-        if ($is_customfield !== false) {
-            $field_key = 'custom_f';
-        }
-        else {
-            $field_key = $var_name;
-        }
-
-
-
+	    // add the counter settings
+	    if ( $is_customfield !== false )
+	    {
+		    $field_key = 'custom_f';
+	    }
+	    else
+	    {
+		    $field_key = $var_name;
+	    }
 
         $suffix = $this->fltSuffix[$field_key];
-        $dependency_direction = $this->moduleparams->get('dependency_direction', 'all');
-        $displayCounter = $this->moduleparams->get($suffix . '_display_counter_results', '1');
+
+	    /**
+	     * @var string $dependency_direction Зависимость направления
+	     */
+	    $dependency_direction = $this->moduleparams->get('dependency_direction', 'all');
+	    /**
+	     * @var int $displayCounter Отображать счетчик возле каждой опции
+	     */
+		$displayCounter = $this->moduleparams->get($suffix . '_display_counter_results', '1');
+
+	    /**
+	     * @var int $display_empty_opt Режим отображения опций, которые не привязаны ни к одному продукту
+	     *                             --- 0. Прятать.
+	     *                             --- 1. Показывать неактивными.
+	     *                             === 2. Показывать активными.
+	     */
         $display_empty_opt = $this->moduleparams->get($suffix . '_disable_empty_filters', '1');
-        $reset_type = $this->component_params->get('reset_results', 0);
+
+		$reset_type = $this->component_params->get('reset_results', 0);
         $selected_flt = $this->selected_flt;
 
 
@@ -971,17 +1033,11 @@ class ModCfFilteringHelper
             }
         }
 
+		// Если создаваемый фильтр - Категории
         if ($var_name == 'virtuemart_category_id') {
-            // Параметр модуля [Категории -> Отображать счетчик возле каждой опции]
+            // Параметр модуля [Категории -> Очищать выбор других фильтров или поисковых запросов при смене категории]
             $on_category_reset_others = $this->moduleparams->get('category_flt_onchange_reset', 'filters');
         }
-
-
-
-
-
-//        echo'<pre>';print_r( $selected_flt );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//        echo'<pre>';print_r( $this->selected_flt );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
 
 	    /*
 	     * Получите параметры этого фильтра из соответствующей функции, которая не учитывает выбор в других фильтрах.
@@ -1004,16 +1060,18 @@ class ModCfFilteringHelper
 		    (!empty($selected_flt) && isset($selected_flt[$var_name]) && count($selected_flt) == 1) ||
 		    $display_empty_opt == '2' ||
 		    $on_category_reset_others == 'filters_keywords' ||
-		    ($on_category_reset_others == 'filters' && empty($selected_flt['q'])))
+		    ($on_category_reset_others == 'filters' && empty($selected_flt['q']))
+	    )
 	    {
 
-
-//            echo'<pre>';print_r( $var_name );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//            die( __FILE__ .' ' . __LINE__);
-
-
 		    $results = $this->optionsHelper->getOptions($var_name);
+			
+			if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+			{
+			    echo'<pre>';print_r( $var_name );echo'</pre>'.__FILE__.' '.__LINE__;
+			    die(__FILE__ .' '. __LINE__ );
 
+			}
 
 		    $options_ar = $results;
 
@@ -1023,7 +1081,12 @@ class ModCfFilteringHelper
 			    $maxLevel   = $results['maxLevel'];
 		    }
 
-		    /*
+		    /**
+		     * В случае типа отображения = (2) «все включено» и displayCounter имеет значение true
+   			 * Мы должны запустить getActiveOptions, чтобы получить счетчик относительно выбранных фильтров
+			 * Это должно происходить только в том случае, если есть выборки в других фильтрах.
+			 * Кроме того, когда на категории влияют другие выборки, следует учитывать эту логику.
+		     * 
 			 * In case of display type=(2) "all as enabled" and the displayCounter is true
 			 * We should run the getActiveOptions to get the counter relative to the selected filters
 			 * This should happen only if there are selections in other filters.
@@ -1049,20 +1112,29 @@ class ModCfFilteringHelper
 		    }
 	    } // hide disabled
 
-
+		// Если режим отображения опций - не привязанных ни к одному товару - "Прятать"
 	    elseif ($display_empty_opt == '0')
 	    {
-
-		    // Получить Активные опции
+			 
+		    // Получить Активные опции для фильтра etc/ $var_name == "custom_f_29"
 		    $options_ar = $this->optionsHelper->getActiveOptions($var_name, $joinFieldData = true);
+			if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+			{
+//			    echo'<pre>';print_r( $options_ar );echo'</pre>'.__FILE__.' '.__LINE__;
+			    
+			}
 
-
+		    // это исправляет аномалию в optionsHelper. Он всегда возвращает опцион на акцию, даже если счетчик равен 0.
 		    // this fixes an anomaly in optionsHelper. It always return an option for the stock, even with 0 counter
 		    if ($var_name == 'stock' && count($options_ar) == 1 && reset($options_ar)->counter == 0)
 		    {
 			    $options_ar = [];
 		    }
-		    // when we have category tree we should get all the categories as all the parents should be active when they have sub-categories
+
+		    // когда у нас есть дерево категорий, мы должны получить все категории,
+		    // так как все родители должны быть активны, когда у них есть подкатегории.
+		    // when we have category tree we should get all the categories as all the parents
+		    // should be active when they have sub-categories
 		    if ($var_name == 'virtuemart_category_id' && $this->moduleparams->get('categories_disp_order', 'tree') == 'tree')
 		    {
 			    $results  = $this->optionsHelper->getOptions($var_name);
@@ -1075,7 +1147,11 @@ class ModCfFilteringHelper
 		    }
 	    }
 
-	    // display empty as disabled
+
+	    /**
+	     * Если режим отображения фильтра "1. Показывать неактивными"
+	     * display empty as disabled
+	     */
 	    elseif ($display_empty_opt == '1')
 	    {
 		    $results    = $this->optionsHelper->getOptions($var_name);
@@ -1109,12 +1185,15 @@ class ModCfFilteringHelper
             $custom_flt_disp_empty = $this->moduleparams->get('custom_flt_disp_empty', '0');
             $disp_clear_tool = $this->moduleparams->get('disp_clear', '1');
 
-            // get the active option of the filter
-            // if the param is show as disabled
-            // in every other case the $options_ar will contain the options that should be displayed
-            // if($display_empty_opt=='1' && $thereIsSelection)$activeOptions=$this->optHelper->getActiveOptions($var_name);
+	        /**
+	         * get the active option of the filter
+	         * if the param is show as disabled
+	         * in every other case the $options_ar will contain the options that should be displayed
+	         * if($display_empty_opt=='1' && $thereIsSelection)$activeOptions=$this->optHelper->getActiveOptions($var_name);
+	         */
 
-            // when it returns true all are active
+            // когда он возвращает true, все активны
+	        // when it returns true all are active
             if ($activeOptions === true) {
                 $activeOptions = [];
             }
@@ -1126,22 +1205,13 @@ class ModCfFilteringHelper
             $filter->setHeader($header);
             $filter->setCounter($displayCounter);
 
-
-
-//            echo'<pre>';print_r( $options_ar );echo'</pre>'.__FILE__.' '.__LINE__;
-//            echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//            die(__FILE__ .' '. __LINE__ );
-
-
-
 			$options = [];
 
             // store the inactive selected too
             $innactive_selected = array();
             $i = 1;
 
-
-            foreach ($options_ar as $key => $opt) {
+            foreach ( $options_ar as $key => $opt) {
                 $options[$key] = array();
                 $options[$key]['id'] = $opt->id;
                 $options[$key]['label'] = $opt->name;
@@ -1154,7 +1224,8 @@ class ModCfFilteringHelper
                 	$options[$key]['media_id'] = $opt->media_id;
                 }
 
-                    // in case of category tree we need some more properties for the tree
+                // в случае дерева категорий нам нужны еще некоторые свойства для дерева
+	            // in case of category tree we need some more properties for the tree
                 if ($var_name == 'virtuemart_category_id' && $this->moduleparams->get('categories_disp_order', 'tree') == 'tree' && $disp_type != 1 && $maxLevel > 0) {
                     if (isset($opt->level)) {
                         $options[$key]['level'] = $opt->level;
@@ -1183,10 +1254,15 @@ class ModCfFilteringHelper
                 }
 
 
-
-
-                // when there are active options , get the counter from the getActiveOptions function
-                // this happens only when the display empty type is:"display as disabled" or "display as enabled" and there is a selection in another filter
+	            /**
+	             * когда есть активные опции, получить счетчик из функции getActiveOptions
+	             * это происходит только в том случае, если пустой тип отображения: "отображать как отключенный"
+	             * или "отображать как включенный" и есть выбор в другом фильтре
+	             *
+	             * when there are active options , get the counter from the getActiveOptions function
+	             * this happens only when the display empty type is:"display as disabled" or "display as enabled"
+	             * and there is a selection in another filter
+	             */
 	            if ($getActive)
 	            {
 		            if (isset($activeOptions[$opt->id]) || !empty($opt->isparent))
@@ -1304,8 +1380,6 @@ class ModCfFilteringHelper
                 $i ++;
             }
 
-
-
             /**
              * Generate the 1st null/clear option
              * If options exist and there is a selection ($selected_array)
@@ -1365,8 +1439,6 @@ class ModCfFilteringHelper
             $filter->setActiveTree($this->active_tree);
 
 
-
-
             /*
              * if there are active subtrees, can be autoexpanded
              * But can happen only:
@@ -1403,14 +1475,11 @@ class ModCfFilteringHelper
                 }
             }
 
-	        if ( $_SERVER['REMOTE_ADDR'] == '80.187.99.133' )
-	        {
-//		        echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//		        die(__FILE__ .' '. __LINE__ );
-	        }
+
 
             return $filter;
         }
+
     }
 
     /**
@@ -1421,6 +1490,16 @@ class ModCfFilteringHelper
      * @since 2.2.1
      * @return array
      */
+
+
+	/**
+	 * @param $activeArray
+	 * @param $options
+	 *
+	 * @return array
+	 * @since 3.9
+	 *
+	 */
     function getActiveSubtrees($activeArray, $options)
     {
         // all are active
@@ -1445,8 +1524,7 @@ class ModCfFilteringHelper
     }
 
     /**
-     * It creates a tree (e.g.
-     * Categories), enabling also the parents of the active options
+     * It creates a tree (e.g. Categories), enabling also the parents of the active options
      * This way the user can reach the active options in the tree depth
      *
      * @param array $options All the options
@@ -1560,6 +1638,17 @@ class ModCfFilteringHelper
         return $this->scriptVars;
     }
 
+	/**
+	 * @param $Vars
+	 *
+	 * @return void
+	 * @since 3.9
+	 */
+	public function setScriptVars( $Vars ){
+		$this->scriptVars = $Vars;
+	}
+
+
     /**
      * @return array
      * @since 2.5.0
@@ -1577,4 +1666,32 @@ class ModCfFilteringHelper
     {
         return $this->stylesDeclaration;
     }
+
+	/**
+	 * Получить версию модуля из файла манифеста
+	 * ---
+	 * @return string - версия модуля - используется как MEDIA VERSION - для загрузки ресурсов
+	 * @since 3.9
+	 * TODO - добавить в шаблон Создания модуля
+	 */
+	public static function getModuleVersion():string
+	{
+		$doc = \Joomla\CMS\Factory::getDocument();
+		$scriptOptions = $doc->getScriptOptions('mod_cf_filtering');
+		if ( isset( $scriptOptions['version'] ) )
+		{
+			return $scriptOptions['version'] ;
+		}#END IF
+
+		$xml_file = __DIR__.'/mod_cf_filtering.xml';
+		$dom      = new DOMDocument("1.0" , "utf-8");
+		$dom->load($xml_file);
+
+		/**
+		 * @var string $__v version mod_cf_filtering
+		 */
+		$version = $dom->getElementsByTagName('version')->item(0)->textContent;
+		$doc->addScriptOptions('mod_cf_filtering' , ['version'=>$version] , true );
+		return $version ;
+	}
 }

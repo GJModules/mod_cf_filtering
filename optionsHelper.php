@@ -273,24 +273,29 @@ class OptionsHelper
         return $options;
     }
 
-    /**
-     *
-     * Proxy function to build the queries of the various filters
-     *
-     * @param JDatabaseQuery
-     * @param string $var_name
-     * @param string $custom_field_type
-     * @return JDatabaseQuery
-     * @since 1.5.0
-     */
-    protected function buildQuery(JDatabaseQuery $query, $var_name, $customFilter, $part = false)
+	/**
+	 * Прокси-функция для построения запросов различных фильтров
+	 * Proxy function to build the queries of the various filters
+	 *
+	 * @param   JDatabaseQueryMysqli  $query
+	 * @param   string                $var_name      Имя Фильтра etc/ "custom_f_29"
+	 * @param   stdClass              $customFilter  Object - параметры фильтра из tbl - #__cf_customfields
+	 * @param   bool                  $part
+	 *
+	 * @return JDatabaseQueryMysqli
+	 * @since 1.5.0
+	 */
+    protected function buildQuery( JDatabaseQueryMysqli $query, string $var_name, stdClass $customFilter, bool $part = false)
     {
-        if (! empty($customFilter)) {
-            $var_type = 'custom_f';
-        }
-        else {
-            $var_type = $var_name;
-        }
+
+	    if ( !empty( $customFilter ) )
+	    {
+		    $var_type = 'custom_f';
+	    }
+	    else
+	    {
+		    $var_type = $var_name;
+	    }
 
         switch ($var_type) {
             case 'virtuemart_category_id':
@@ -311,27 +316,45 @@ class OptionsHelper
             default:
                 break;
         }
+
         return $query;
     }
 
-    /**
-     * Get the active options of a current filter using dependencies from the selections in other filters
-     *  Получить активные параметры текущего фильтра, используя зависимости от выбора в других фильтрах
-     *
-     * @param string $field
-     * @param boolean $joinFieldData if there will be a join with other queries, built by the buildQuery functions.
-     * Join is not necessary when the display type is "disabled" as only the active options are used
-     * @return mixed when there are results - true if there are no other filters selected. So all are active
-     * @api used by 3rd parties
-     * @since 1.0
-     */
-    public function getActiveOptions($field, $joinFieldData = false)
-    {
+	protected static $ActiveOptions = [] ;
 
+	/**
+	 * Получить активные параметры текущего фильтра, используя зависимости от выбора в других фильтрах
+	 * --
+	 * Get the active options of a current filter using dependencies from the selections in other filters
+	 *
+	 *
+	 * @param   string   $field          Имя фильтра etc/ "custom_f_29"
+	 * @param   boolean  $joinFieldData  Если будет объединение с другими запросами, построенными функциями buildQuery.
+	 *                                   Присоединение не требуется, когда тип отображения отключен, так как только
+	 *                                   активный варианты используются
+	 *                                   if there will be a join with other queries,
+	 *                                   built by the buildQuery functions. Join is not necessary when the display type
+	 *                                   is "disabled" as only the active options are used
+	 *
+	 * @return mixed    Когда есть результаты - true, если не выбраны другие фильтры. Так что все активны
+	 *                  when there are results - true if there are no other filters selected. So all are active
+	 * @throws Exception
+	 * @since 1.0
+	 * @api   used by 3rd parties
+	 */
+    public function getActiveOptions( string $field, bool $joinFieldData = false)
+    {
 
         if (isset($this->activeOptions[$field])) {
             return $this->activeOptions[$field];
         }
+
+	    /**
+	     * Module params - Очищать выбор других фильтров или поисковых запросов при смене категории
+	     * ---
+	     * @var string $category_flt_onchange_reset
+	     */
+	    $category_flt_onchange_reset = $this->moduleparams->get('category_flt_onchange_reset', 'filters') ;
 
         $selected_flt = [];
         $customfilter = null;
@@ -341,13 +364,13 @@ class OptionsHelper
         // each range filter and search stores the found product ids in this assoc array
         $found_product_ids_per_filter = $this->found_product_ids_per_filter;
 
-        // all the product ids found from searches and range filters
+        // все идентификаторы продуктов, найденные в результате поиска и фильтров диапазона
+	    // all the product ids found from searches and range filters
         $returned_products = $this->componentparams->getReturnedProductsType();
         $filtered_products = $this->componentparams->getFilteredProductsType();
 
-
-
-        // if the dependency works from top to bottom, get the selected filters as stored in the "selected_fl_per_flt"
+        // если зависимость работает сверху вниз, получить выбранные фильтры, хранящиеся в "selected_fl_per_flt"
+	    // if the dependency works from top to bottom, get the selected filters as stored in the "selected_fl_per_flt"
         if (isset($this->selected_fl_per_flt)) {
             if (isset($this->selected_fl_per_flt[$field])) {
                 $selected_flt = $this->selected_fl_per_flt[$field];
@@ -356,9 +379,12 @@ class OptionsHelper
             }
         }
 
+        // если категория не сбрасывает ключевые слова, то она должна получить ключевые слова в аккаунте
         // if the category is not resetting the keywords, then it should get keywords in account
-        elseif ($field == 'virtuemart_category_id' && $this->moduleparams->get('category_flt_onchange_reset', 'filters') == 'filters') {
-            // reset that for the categories we do not want them to take other filters like price range into account
+        elseif ($field == 'virtuemart_category_id' && $category_flt_onchange_reset == 'filters') {
+
+			// сбросьте это для категорий, которые мы не хотим, чтобы они учитывали другие фильтры, такие как ценовой диапазон
+	        // reset that for the categories we do not want them to take other filters like price range into account
             $where_productIds = null;
 	        if (isset($this->selected_flt['q']))
 	        {
@@ -369,17 +395,21 @@ class OptionsHelper
             $selected_flt = $this->selected_flt;
         }
 
-        if (strpos($field, 'custom_f_') !== false) {
+        if (strpos( $field, 'custom_f_') !== false) {
             // get the filter id
             preg_match('/[0-9]+/', $field, $mathces);
             $filterCustomId = $mathces[0];
-            $custom_filters = cftools::getCustomFilters($this->moduleparams);
-            $customfilter = $custom_filters[$filterCustomId];
+	        /**
+	         * Массив всех включенных фильтров
+	         */
+			$custom_filters = cftools::getCustomFilters($this->moduleparams);
+
+			$customfilter = $custom_filters[$filterCustomId];
         }
 
         $db = Factory::getDbo();
         $query = $db->getQuery(true);
-        $query = $this->buildQuery($query, $field, $customfilter, true);
+        $query = $this->buildQuery( $query, $field, $customfilter , true);
         if(empty((string)$query)) {
             return [];
         }
@@ -391,24 +421,33 @@ class OptionsHelper
         $leftJoins = [];
         $where = [];
 
-        // if the field is a cucstomfield use that as the table name
+        // если поле является настраиваемым, используйте его как имя таблицы.
+	    // if the field is a cucstomfield use that as the table name
         if ($is_customfield !== false) {
             $this->table_db_flds[$field] = 'cfp';
         }
 
-            // iterate through the selected variables and join the relevant tables
+	    // перебрать фильтры с выбранными опциями -- и присоединиться к соответствующим таблицам
+	    // iterate through the selected variables and join the relevant tables
         foreach ($selected_flt as $key => $ar_value) {
             $wherecf = array();
 
-            /*
-             * the query should run only if there are options selected in the filters
-             * other than the one we get as field param in that function
-             */
+	        /**
+	         * запрос должен выполняться только в том случае, если в фильтрах выбраны параметры
+	         * кроме того, что мы получаем в качестве параметра поля в этой функции
+	         *
+	         * the query should run only if there are options selected in the filters
+	         * other than the one we get as field param in that function
+	         */
             if ((is_array($ar_value) && count($ar_value) == 0) || $key == $field) {
                 continue;
             }
 
-            /*
+            /**
+             * если ключ относится к пользовательскому полю, существуют другие правила
+             * Это связано с тем, что пользовательские фильтры хранятся в различных массивах. Они используют сгенерированное имя модуля
+             * а также они хранятся как varchars в БД, и мы не можем использовать их где
+             *
              * if the key refers to a customfield, there are other rules
              * This because the custom filers are stored in various arrays. They use a generated by the module name
              * and also they are stored as varchars in the db and we cannot use where in
@@ -418,7 +457,11 @@ class OptionsHelper
                 // get the filter id
                 preg_match('/[0-9]+/', $key, $mathces);
 
-                /*
+                /**
+                 * Не учитывать переменную, если:
+                 * а) Не существует.
+                 * б) Зависит от этого фильтра. Родительские фильтры не должны зависеть от их зависимых (подфильтров).
+                 *
                  * Do not get the var into account, if:
                  * a) Does not exist.
                  * b) Depends on that filter. Parent filters should not be affected by their dependent (sub-filters).
@@ -426,6 +469,7 @@ class OptionsHelper
                 if(!isset($this->customFltActive[(int) $mathces[0]]) || in_array($mathces[0], \cftools::getDependentCustomFilters($filterCustomId))) {
                     continue;
                 }
+
                 $custFltObj = $this->customFltActive[(int) $mathces[0]];
 
                 // check if its range
@@ -533,13 +577,15 @@ class OptionsHelper
                     $innerJoins[] = "{$this->table_db_flds[$key]} ON p.virtuemart_product_id = {$this->table_db_flds[$key]}.virtuemart_product_id";
                 }
             }
-        }
+        }# END FOREACH
 
-
-
-        /* If we are searching for price ranges, we should not take into account the products returned by the current price search,
-         * only by the other searches
-         */
+	    /**
+	     * Если мы ищем ценовые диапазоны, мы не должны принимать во внимание продукты, возвращаемые текущим ценовым поиском,
+	     * только по другим запросам
+	     *
+	     * If we are searching for price ranges, we should not take into account the products returned by the current price search,
+	     * only by the other searches
+	     */
         if ($field == 'price' && $where_productIds !== null) {
             $where_productIds = null;
             $idPerFilter = [];
@@ -572,42 +618,45 @@ class OptionsHelper
         // generate some db vars
         if ($is_customfield !== false) {
             preg_match('/[0-9]+/', $field, $mathcess);
-            if ($customfilter->field_type != 'E') { // not plugin
+	        // not plugin
+			if ($customfilter->field_type != 'E') {
                 $where[] = 'cfp.virtuemart_custom_id=' . (int) $mathcess[0];
             }
-
             // is plugin and has params
             elseif (isset($customfilter->pluginparams)) {
                 $where[] = 'cf.virtuemart_custom_id=' . (int) $mathcess[0];
             }
         }
 
-        // if we pass an empty $where, ends up in sql error
+        // если мы передаем пустой $where, это приводит к ошибке sql
+	    // if we pass an empty $where, ends up in sql error
         if(!empty($where)) {
             $query->where(implode(' AND ', $where));
         }
-        if (!empty($innerJoins)) {
+        
+		if (!empty($innerJoins)) {
             $query->innerJoin(implode(' INNER JOIN ', $innerJoins));
         }
-        if (!empty($leftJoins)) {
+        
+		if (!empty($leftJoins)) {
             $query->leftJoin(implode(' LEFT JOIN ', $leftJoins));
         }
 
-        $db->setQuery($query);
-        $activeOpt = $db->loadObjectList();
-        $query = (string)$query;
+	    $db->setQuery($query);
+	    $activeOpt = $db->loadObjectList();
 
-
-
-        /*
-         * If $joinFieldData is true all the data are included in the $activeOpt
-         * so we have to handle them accordingly e.g. Create category levels or encode cf values
-         */
+	    /**
+	     * Если $joinFieldData имеет значение true, все данные включаются в $activeOpt.
+	     * поэтому мы должны обращаться с ними соответствующим образом, например.
+	     * Создание уровней категорий или кодирование значений cf
+	     * 
+	     * If $joinFieldData is true all the data are included in the $activeOpt
+	     * so we have to handle them accordingly e.g. Create category levels or encode cf values
+	     */
         if (! empty($activeOpt)) {
             if ($joinFieldData) {
 
-
-                if ($is_customfield !== false && ! empty($activeOpt)) {
+                if ( $is_customfield !== false && !empty($activeOpt)) {
                     $sort_by = 'name';
                     if (($customfilter->is_list && ! empty($customfilter->custom_value)) || $customfilter->field_type == 'E') {
                         $sort_by = 'default_values';
@@ -617,10 +666,6 @@ class OptionsHelper
                      * Создать MD5 из значения
                      */
                     $activeOpt = $this->encodeOptions($activeOpt);
-
-
-
-
 
                     if ($sort_by == 'name') {
                         $this->sort_by($sort_by, $activeOpt);
@@ -862,14 +907,13 @@ class OptionsHelper
         }
 
 
-
-
-
-        /**
-         * @var string $cat_disp_order Порядок отображения категорий. Если мы находимся в верхнем уровне категорий и
-         * нужно отображат только подкатегории, то нам не нужен порядок дерева - и выводим по сортировке категорий.
-         * the display order of the categories. If we display only the subcategories we do not need tree ordering.
-         */
+	    /**
+	     * @var string $cat_disp_order Порядок отображения категорий. Если мы находимся в верхнем уровне категорий и
+	     *                             нужно отображать только подкатегории, то нам не нужен порядок дерева - и выводим
+	     *                             по сортировке категорий.
+	     *                             the display order of the categories. If we display only the subcategories we do
+	     *                             not need tree ordering.
+	     */
         $cat_disp_order = ! empty($subtree_parent_category_id) && $this->moduleparams->get('categories_disp_order') == 'tree' ? 'ordering' : $this->moduleparams->get('categories_disp_order');
 
         /**
@@ -916,6 +960,8 @@ class OptionsHelper
         //category->category table (parent child products)
         $innerJoin[] = "#__virtuemart_category_categories AS cx ON cx.category_child_id=vc.virtuemart_category_id ";
 
+
+
         /*
          * считать результаты только тогда, когда
          * $displayCounterSetting активен и является частью запроса (getActiveOptions)
@@ -934,11 +980,11 @@ class OptionsHelper
          *
          * //we don't want in any case to run the count both in the getActiveOptions and here
          */
-        if ($displayCounterSetting) {
+	    if ($displayCounterSetting) {
 
             // if return child products
             if ($returned_products == 'child') {
-                $query->select("SUM(CASE WHEN p.product_parent_id>0 THEN 1 ELSE 0 END) AS counter");
+                $query->select("SUM(CASE WHEN p.product_parent_id > 0 THEN 1 ELSE 0 END) AS counter");
             }
             // if return parent products
             else if ($returned_products == 'parent') {
@@ -1114,9 +1160,11 @@ class OptionsHelper
      * но является родителем категорий, которые должны отображаться (поддерево)
      *
      * Detects and returns the parent category of the current subtree based on the selections
-     * The parent category is not necessarily the actual parent of the cuurent category but the parent of the categories that should be displayed (subtree)
+     * The parent category is not necessarily the actual parent of the current category but the parent of the categories
+     * that should be displayed (subtree)
      *
      * @param array $categories
+     *
      * @return boolean|array Массив родительских категорий или FALSE
      * @since 2.2.2
      */
@@ -1469,7 +1517,7 @@ class OptionsHelper
      * @author Sakis Terz
      * @since 1.5.0
      */
-    public function buildManufQuery(JDatabaseQuery $query, $part = false)
+    public function buildManufQuery(JDatabaseQuery $query, $part = false):JDatabaseQuery
     {
         $suffix = $this->fltSuffix['virtuemart_manufacturer_id'];
         $displayCounterSetting = $this->moduleparams->get($suffix . '_display_counter_results', 1);
@@ -1482,9 +1530,9 @@ class OptionsHelper
             $query->leftJoin("#__virtuemart_manufacturer_medias AS manuf_med ON vm.virtuemart_manufacturer_id=manuf_med.virtuemart_manufacturer_id");
         }
 
-        /*
-         * count results only when
-         * the $displayCounterSetting is active
+        /**
+         * считать результаты только тогда, когда параметр $displayCounterSetting активен
+         * count results only when the $displayCounterSetting is active
          */
         if ($displayCounterSetting) {
 
@@ -1590,10 +1638,12 @@ class OptionsHelper
     }
 
     /**
+     * Создайте запрос для опционов на акции
      * Build the query for the stock options
      *
      * @param JDatabaseQuery $query
      * @param bool $part
+     *
      * @return JDatabaseQuery
      * @since 1.0.0
      */
@@ -1968,21 +2018,25 @@ class OptionsHelper
     }
 
     /**
+     *  Создание запроса для Custom Fields При создании фильтра
      *  Build the query for the custom options
      *
      * @param JDatabaseQuery $query
      * @param \stdClass $customfilter
      * @param bool $part
+     *
      * @return JDatabaseQuery
      * @since 1.5.0
      */
-    public function buildCustomFltQuery(JDatabaseQuery $query, $customfilter, $part = false)
+    public function buildCustomFltQuery(JDatabaseQuery $query, $customfilter, $part = false):JDatabaseQuery
     {
+
         PluginHelper::importPlugin('vmcustom');
         $id = $customfilter->custom_id;
         $field_type = $customfilter->field_type;
+		
         $suffix = $this->fltSuffix['custom_f'];
-        $displayCounterSetting = $this->moduleparams->get($suffix . '_display_counter_results', 0);
+        $displayCounterSetting = $this->moduleparams->get($suffix . '_display_counter_results', 1);
         $returned_products = $this->componentparams->getReturnedProductsType();
         $filtered_products = $this->componentparams->getFilteredProductsType();
         $db = Factory::getDbo();
@@ -2003,13 +2057,18 @@ class OptionsHelper
             if ($product_customvalues_table != $customvalues_table) {
                 $query->innerJoin($product_customvalues_table . ' AS cfp ON cf.' . $filter_by . '=cfp.' . $filter_by);
             }
-        } else {
+        }
+		else {
             $customvalues_table = 'cfp';
             $product_customvalues_table = '#__virtuemart_product_customfields';
             $filter_by = 'customfield_value';
         }
 
-        /*
+        /**
+         * подсчет результатов только тогда, когда $displayCounterSetting активен и нет выбора
+         * или когда параметр $displayCounterSetting активен и единственным выбором является cf
+         * во всех остальных случаях подсчет будет производиться в функции getActiveOptions
+         *
          * count results only when the $displayCounterSetting is active and there is no selection
          * or when the $displayCounterSetting is active and the only selection is that cf
          * in all other cases the counting will be done within the getActiveOptions function
@@ -2020,7 +2079,8 @@ class OptionsHelper
             // if return child products
             if ($returned_products == 'child') {
                 $query->select("SUM(CASE WHEN p.product_parent_id>0 THEN 1 ELSE 0 END) AS counter");
-            } // if return parent products
+            }
+			// if return parent products
             else if ($returned_products == 'parent') {
                 if ($filtered_products == 'all') {
                     $query->select("COUNT(DISTINCT (CASE WHEN `p`.`product_parent_id` =0 THEN `p`.`virtuemart_product_id` ELSE `p`.`product_parent_id` END )) AS counter");
@@ -2058,16 +2118,26 @@ class OptionsHelper
 
             // use of shopper groups
             if (count($this->shopperGroups) > 0 && $this->componentparams->get('products_multiple_shoppers', 0)) {
-                $query->innerJoin("(SELECT cfp.virtuemart_product_id,s.`virtuemart_shoppergroup_id` FROM `#__virtuemart_product_shoppergroups` AS s
-					RIGHT JOIN " . $product_customvalues_table . " AS cfp ON cfp.virtuemart_product_id =s.virtuemart_product_id WHERE
-					(s.`virtuemart_shoppergroup_id` IN(" . implode(',', $this->shopperGroups) . ") OR (s.`virtuemart_shoppergroup_id`) IS NULL) GROUP BY cfp.virtuemart_product_id) AS sp
-					ON  cfp.virtuemart_product_id=sp.virtuemart_product_id");
+                $query->innerJoin("
+	                (
+	                    SELECT cfp.virtuemart_product_id,s.`virtuemart_shoppergroup_id` 
+	                    FROM `#__virtuemart_product_shoppergroups` AS s
+						RIGHT JOIN " . $product_customvalues_table . " AS cfp ON cfp.virtuemart_product_id = s.virtuemart_product_id 
+						WHERE 
+						(s.`virtuemart_shoppergroup_id` IN(" . implode(',', $this->shopperGroups) . ") 
+						OR 
+						(s.`virtuemart_shoppergroup_id`) IS NULL
+					) 
+					GROUP BY cfp.virtuemart_product_id) AS sp
+						ON  cfp.virtuemart_product_id=sp.virtuemart_product_id"
+                );
             }
         }
 
         // if not plugin
         if ($field_type != 'E') {
-            // when boolean display Yes or No in case of 0 and 1
+			// при логическом отображении Да или Нет в случае 0 и 1
+	        // when boolean display Yes or No in case of 0 and 1
             if ($field_type == 'B') {
                 $jyes = Text::_('JYES');
                 $jno = Text::_('JNO');
@@ -2083,7 +2153,8 @@ class OptionsHelper
             }
             $order = '`name` ASC';
 
-            // if its a list get the list ordering, otherwise alphabetically
+            // если это список, получить порядок списка, иначе в алфавитном порядке
+	        // if its a list get the list ordering, otherwise alphabetically
             if ($customfilter->is_list && !empty($customfilter->custom_value)) {
                 $defaultValues = explode(';', $customfilter->custom_value);
                 if ($defaultValues !== false) {
@@ -2101,7 +2172,9 @@ class OptionsHelper
                     }
                 }
             }
-        } // plugins should exec that function (plugin hook)
+        }
+		// плагины должны выполнять эту функцию (крючок плагина)
+        // plugins should exec that function (plugin hook)
         else {
             $query->select("$selectType ".$db->quoteName("cf.{$filter_by}", "id"));
             $query->select($db->quoteName($customvalue_value_field, 'name'));
@@ -2119,20 +2192,28 @@ class OptionsHelper
             $order = $pluginparams->sort_by; // change that later
         }
         $query->order("$order");
+
+
+
         return $query;
     }
 
     /**
+     * Кодировать значение параметра
+     * ---
+     * Параметры могут содержать специальные символы, которые нарушат URL-запрос. Поэтому мы конвертируем их в шестнадцатеричные значения
+     * ---
      * Encode the option's value
      * Options may contain special characters, which will break the url query
      * So we convert them to hex values
      *
-     * @param array $opt_array An object array with the options
+     * @param   array  $opt_array  An object array with the options
+     *
      * @return array object array with the value attribute in hex format
      * @since 1.0
      * @author Sakis Terz
      */
-    public function encodeOptions($opt_array)
+    public function encodeOptions( array $opt_array)
     {
         if (empty($opt_array)) {
             return $opt_array;
@@ -2145,10 +2226,6 @@ class OptionsHelper
         /**
          * Refactoring ******************
          */
-
-
-
-
 
         return $new_opt_array;
     }

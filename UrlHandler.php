@@ -77,11 +77,13 @@ class UrlHandler
     }
 
     /**
+     * Создает href/URI для каждого параметра фильтра.
      * Creates the href/URI for each filter's option
      *
      * @param CfFilter $filter
      * @param null|string $var_value
      * @param string $type
+     *
      * @return Uri
      * @since 1.0.0
      */
@@ -90,9 +92,6 @@ class UrlHandler
         $var_name = $filter->getVarName();
         $display_type = implode(',',$filter->getDisplay());
         $options = $filter->getOptions();
-
-
-
 
         $on_category_reset_others = false;
         $selected_filters = $this->selected_flt_modif;
@@ -116,8 +115,6 @@ class UrlHandler
                 $selected_filters['virtuemart_category_id'] = $this->getHiddenCategory();
             }
         }
-        
-
 
         /**
          * @var string $dependency_direction Зависимость направления
@@ -172,9 +169,10 @@ class UrlHandler
          * In case of select , radio or links (single select) or is clear remove previous selected criteria from the same filter
          * only 1 option from that filter should be selected
          */
-        if (($display_type != CfFilter::DISPLAY_CHECKBOX && $display_type != CfFilter::DISPLAY_COLOR_BUTTON_MULTI && $display_type != CfFilter::DISPLAY_BUTTON_MULTI) || $type == 'clear') {
-            $q_array=$this->getClearQuery($q_array, $filter, $type);
-        }
+	    if (($display_type != CfFilter::DISPLAY_CHECKBOX && $display_type != CfFilter::DISPLAY_COLOR_BUTTON_MULTI && $display_type != CfFilter::DISPLAY_BUTTON_MULTI) || $type == 'clear')
+	    {
+		    $q_array = $this->getClearQuery($q_array, $filter, $type);
+	    }
 
         /*
          * In case an option is already selected
@@ -260,24 +258,27 @@ class UrlHandler
 
         // If trigger is on select load results
         // else load the module
-        if ($results_trigger == 'btn') {
-            unset($q_array['Itemid']);
-            $q_array['module_id'] = $this->module->id;
-        }
+	    if ( $results_trigger == 'btn' )
+	    {
+		    unset($q_array[ 'Itemid' ]);
+		    $q_array[ 'module_id' ] = $this->module->id;
+	    }
 
         $uri = Uri::getInstance('index.php');
         $uri->setQuery($q_array);
-
 
 
         return $uri;
     }
 
     /**
+     * Используется, если категория не отображается (например,
+     * отображаются только дочерние)
      * Used in case a category is not displayed (e.g.
      * only child are displayed)
      *
      * @return bool|int
+     * @since 3.9
      */
     protected function getHiddenCategory()
     {

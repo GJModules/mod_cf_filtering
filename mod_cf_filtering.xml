@@ -7,8 +7,8 @@
 	<copyright>Copyright(c)</copyright>
 	<license>GNU/GPL v.2</license>
 
-	<creationDate>04.11.22-14:01</creationDate>
-	<version>3.10.16</version>
+	<creationDate>09.12.22-16:06</creationDate>
+	<version>3.10.18</version>
 
 	<description><![CDATA[<h3>Custom Filters <i style="font-size:12px">(v.2.10.1 <span style="font-size:9px">14 Jul 2021</span>)</i></h3>
     <span><img src="../modules/mod_cf_filtering/assets/cf_logo.png"/></span>
@@ -19,6 +19,8 @@
 		<filename module="mod_cf_filtering">mod_cf_filtering.php</filename>
 		<folder>assets</folder>
 		<folder>tmpl</folder>
+		<folder>language</folder>
+
 		<filename>bootstrap.php</filename>
 		<filename>CfFilter.php</filename>
 		<filename>DisplayManager.php</filename>
@@ -39,22 +41,31 @@
 	<help key="JHELP_EXTENSIONS_MODULE_MANAGER_MOST_READ" />
 	<config>
 		<fields name="params">
+			<!-- Вкладка - Модуль-->
 			<fieldset name="basic"
 					  addfieldpath="/administrator/components/com_customfilters/models/fields">
 
-				<field type="spacer" name="cfspacer" class="cfspacer"
+				<field name="cfspacer"
+					   type="spacer"
+					   class="cfspacer"
 					   label="MOD_CF_FILTERING_RESULTS_AND_MODULE_LOADING_LABEL"
 					   description="MOD_CF_FILTERING_RESULTS_AND_MODULE_LOADING_DESC" />
 
-				<field name="results_trigger" type="list" default="1"
-					   label="MOD_CF_FILTERING_RESULTS_TRIGGER_LABEL" description="MOD_CF_FILTERING_RESULTS_TRIGGER_DESC">
+				<field name="results_trigger"
+					   type="list"
+					   default="1"
+					   label="MOD_CF_FILTERING_RESULTS_TRIGGER_LABEL"
+					   description="MOD_CF_FILTERING_RESULTS_TRIGGER_DESC">
 					<option value="sel">MOD_CF_FILTERING_AFTER_ANY_SELECTION</option>
 					<option value="btn">MOD_CF_FILTERING_AFTER_PRESSING_BUTTON
 					</option>
 				</field>
 
-				<field name="results_loading_mode" type="list" default="ajax"
-					   label="MOD_CF_FILTERING_RESULTS_LOADING_MODE_LABEL" description="MOD_CF_FILTERING_RESULTS_LOADING_MODE_DESC">
+				<!-- Режим загрузки результатов -->
+				<field name="results_loading_mode"
+					   type="list" default="ajax"
+					   label="MOD_CF_FILTERING_RESULTS_LOADING_MODE_LABEL"
+					   description="MOD_CF_FILTERING_RESULTS_LOADING_MODE_DESC">
 					<option value="http">MOD_CF_FILTERING_HTTP</option>
 					<option value="ajax">MOD_CF_FILTERING_AJAX</option>
 				</field>
@@ -72,7 +83,7 @@
 				<field type="spacer" name="cfspacer_other_gen" class="cfspacer"
 					   label="MOD_CF_FILTERING_OTHER_GENERAL_PARAMS" description="MOD_CF_FILTERING_OTHER_PARAMS" />
 
-				<!-- зависимость направления -->
+				<!-- Зависимость направления -->
 				<field name="dependency_direction" type="list" default="all"
 					   label="MOD_CF_FILTERING_DEPENDENCY_DIR_LABEL" description="MOD_CF_FILTERING_DEPENDENCY_DIR_DESC">
 					<!-- Все - означает зависимость фильтра и от вышестоящих и от нижестоящих фильтров. -->
@@ -102,33 +113,38 @@
 					<option value="0">JNO</option>
 				</field>
 
-				<field name="reset_all_reset_flt" type="list" default="custom_f"
-					   multiple="true" size="5" label="MOD_CF_FILTERING_RESET_FLT_LABEL"
+				<field name="reset_all_reset_flt"
+					   type="list"
+					   default="custom_f"
+					   multiple="true"
+					   size="5"
+					   label="MOD_CF_FILTERING_RESET_FLT_LABEL"
 					   description="MOD_CF_FILTERING_RESET_FLT_DESC">
-					<option value="q">COM_MODULES_MOD_CF_FILTERING_KEYWORD_FIELDSET_LABEL
-					</option>
-					<option value="virtuemart_category_id">COM_MODULES_MOD_CF_FILTERING_CATEGORIES_FIELDSET_LABEL
-					</option>
-					<option value="virtuemart_manufacturer_id">COM_MODULES_MOD_CF_FILTERING_MANUFACTURERS_FIELDSET_LABEL
-					</option>
-					<option value="price">COM_MODULES_MOD_CF_FILTERING_PRICE_FIELDSET_LABEL
-					</option>
-					<option value="custom_f">COM_MODULES_MOD_CF_FILTERING_CUSTOM_FILTERS_FIELDSET_LABEL
-					</option>
+					<option value="q">COM_MODULES_MOD_CF_FILTERING_KEYWORD_FIELDSET_LABEL</option>
+					<option value="virtuemart_category_id">COM_MODULES_MOD_CF_FILTERING_CATEGORIES_FIELDSET_LABEL</option>
+					<option value="virtuemart_manufacturer_id">COM_MODULES_MOD_CF_FILTERING_MANUFACTURERS_FIELDSET_LABEL</option>
+					<option value="price">COM_MODULES_MOD_CF_FILTERING_PRICE_FIELDSET_LABEL</option>
+					<option value="custom_f">COM_MODULES_MOD_CF_FILTERING_CUSTOM_FILTERS_FIELDSET_LABEL</option>
 				</field>
 
-				<field name="indexfltrs_by_search_engines" type="radio"
-					   class="btn-group btn-group-yesno" default="0"
-					   label="MOD_CF_FILTERING_INDEX_BY_SEARCH_ENGINES_LABEL" description="MOD_CF_FILTERING_INDEX_BY_SEARCH_ENGINES_DESC">
+				<!-- Будут ли индексироваться поисковыми системами ссылки фильтра.(Используется nofollow) -->
+				<field name="indexfltrs_by_search_engines"
+					   type="radio"
+					   class="btn-group btn-group-yesno"
+					   default="0"
+					   label="MOD_CF_FILTERING_INDEX_BY_SEARCH_ENGINES_LABEL"
+					   description="MOD_CF_FILTERING_INDEX_BY_SEARCH_ENGINES_DESC">
 					<option value="1">JYES</option>
 					<option value="0">JNO</option>
 				</field>
 
-				<field name="filterlist" type="filterlist"
-					   label="MOD_CF_FILTERING_FILTERLIST_LABEL" description="MOD_CF_FILTERING_FILTERLIST_DESC" />
+				<!-- Порядок отображения фильтров - в модуле сортируемое поле -->
+				<field name="filterlist"
+					   type="filterlist"
+					   label="MOD_CF_FILTERING_FILTERLIST_LABEL"
+					   description="MOD_CF_FILTERING_FILTERLIST_DESC" />
 			</fieldset>
-
-
+			<!-- Вкладка - Поиск по ключевым фразам -->
 			<fieldset name="MOD_CF_FILTERING_KEYWORD">
 				<field name="keyword_flt_published" type="radio" default="1"
 					   class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_PUBLISHED_LABEL"
@@ -182,8 +198,7 @@
 					<option value="0">JNO</option>
 				</field>
 			</fieldset>
-
-
+			<!-- Вкладка - Фильтр по категориям -->
 			<fieldset name="MOD_CF_FILTERING_CATEGORIES">
 				<field name="category_flt_published" type="radio" default="1"
 					   class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_PUBLISHED_LABEL"
@@ -351,8 +366,7 @@
 					<option value="0">JNO</option>
 				</field>
 			</fieldset>
-
-
+			<!-- Вкладка - Фильтр по производителям -->
 			<fieldset name="MOD_CF_FILTERING_MANUFACTURERS">
 				<field name="manuf_flt_published" type="radio" default="1"
 					   class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_PUBLISHED_LABEL"
@@ -454,8 +468,7 @@
 					<option value="0">JNO</option>
 				</field>
 			</fieldset>
-
-
+			<!-- Вкладка - Фильтр цен-->
 			<fieldset name="MOD_CF_FILTERING_PRICE">
 				<field name="price_flt_published" type="radio" default="1"
 					   class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_PUBLISHED_LABEL"
@@ -548,8 +561,7 @@
 					<option value="0">JNO</option>
 				</field>
 			</fieldset>
-
-
+			<!-- Вкладка - Фильтр наличия -->
 			<fieldset name="MOD_CF_FILTERING_STOCK">
 				<field name="stock_flt_published" type="radio" default="0"
 					   class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_PUBLISHED_LABEL"
@@ -627,8 +639,7 @@
 					<option value="0">JNO</option>
 				</field>
 			</fieldset>
-
-
+			<!-- Вкладка - Фильтр по опциям товаров-->
 			<fieldset name="MOD_CF_FILTERING_CUSTOM_FILTERS">
 				<field name="custom_flt_published" type="radio" default="1"
 					   class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_PUBLISHED_LABEL"
@@ -636,18 +647,28 @@
 					<option value="1">JYES</option>
 					<option value="0">JNO</option>
 				</field>
-
-				<field name="custom_flt_disable_empty_filters" type="list"
-					   default="0" label="MOD_CF_FILTERING_EMPTY_FILTER_OPTIONS_LABEL"
+				<!-- Режим отображения опций, которые не привязаны ни к одному продукту -->
+				<field name="custom_flt_disable_empty_filters"
+					   type="list"
+					   default="0"
+					   label="MOD_CF_FILTERING_EMPTY_FILTER_OPTIONS_LABEL"
 					   description="MOD_CF_FILTERING_EMPTY_FILTER_OPTIONS_DESC">
+					<!-- Показывать неактивными -->
 					<option value="1">MOD_CF_FILTERING_SHOW_DISABLED</option>
+					<!-- Прятать -->
 					<option value="0">MOD_CF_FILTERING_HIDE</option>
+					<!-- Показывать активными -->
 					<option value="2">MOD_CF_FILTERING_SHOW_ENABLED</option>
 				</field>
 
-				<field name="custom_flt_display_counter_results" type="radio"
-					   class="btn-group btn-group-yesno" default="0"
-					   label="MOD_CF_FILTERING_DISP_NUM_RESULTS_LABEL" description="MOD_CF_FILTERING_DISP_NUM_RESULTS_DESC2">
+				<!-- Отображать счетчик возле каждой опции
+				Прим.: это может вызвать задержки при большом количестве позиций -->
+				<field name="custom_flt_display_counter_results"
+					   type="radio"
+					   class="btn-group btn-group-yesno"
+					   default="0"
+					   label="MOD_CF_FILTERING_DISP_NUM_RESULTS_LABEL"
+					   description="MOD_CF_FILTERING_DISP_NUM_RESULTS_DESC2">
 					<option value="1">JYES</option>
 					<option value="0">JNO</option>
 				</field>
@@ -732,14 +753,15 @@
 				</field>
 			</fieldset>
 
-
+			<!-- Вкладка - Дополнительные параметры -->
 			<fieldset name="advanced">
 				<field name="layout" type="modulelayout" label="JFIELD_ALT_LAYOUT_LABEL"
 					   description="JFIELD_ALT_MODULE_LAYOUT_DESC" />
-
+				<!-- Режим отладки Модуля -->
 				<field name="cf_profiler" type="radio" default="0"
-					   class="btn-group btn-group-yesno" label="MOD_CF_FILTERING_DEBUG_LABEL"
-					   description="MOD_CF_FILTERING_DEBUG_DESC">
+					   class="btn-group btn-group-yesno"
+					   label="MOD_FILTERING_DEBUG_LABEL"
+					   description="MOD_FILTERING_DEBUG_DESC">
 					<option value="1">JYES</option>
 					<option value="0">JNO</option>
 				</field>

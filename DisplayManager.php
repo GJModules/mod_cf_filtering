@@ -12,46 +12,58 @@ use Joomla\Registry\Registry;
 use Joomla\CMS\Factory;
 
 /**
+ * Класс выполняет проверки о том, должны ли отображаться фильтры или нет.
+ * ---
  * The class performs checks about whether the filters should be displayed or not
  *
  * @author sakis
- *
+ * @since 3.9
  */
 class DisplayManager
 {
     /**
-     *
+     * - Параметры модуля фильтрации
+     * ---
      * @var Registry
+     * @since 3.9
      */
     protected $params;
 
     /**
-     *
+     * Массив выбранных опций в фильтрах
+     * ---
      * @var array
+     * @since 3.9
      */
     protected $selected_flt;
 
     /**
+     * @param Registry  $params        - Параметры модуля
+     * @param   array   $selected_flt  Массив выбранных опций в фильтрах
      *
-     * @param Registry $params
-     * @param array $selected_flt
+     * @since 3.9
      */
-    public function __construct(Registry $params, $selected_flt = [])
+    public function __construct( Registry $params , array $selected_flt = [])
     {
         $this->params = $params;
         $this->selected_flt = $selected_flt;
     }
 
     /**
-     * Управляйте параметрами правил отображения для указанного файла, чтобы проверить, должен ли фильтр отображаться на текущей странице.
-     * Control the display rules params for the specified flt to check if a filter should be displayed in the current page
+     * Управляйте параметрами правил отображения для указанного файла, чтобы проверить,
+     * должен ли фильтр отображаться на текущей странице.
+     * ---
+     * Control the display rules params for the specified flt to check if a filter
+     * should be displayed in the current page
      *
-     * @param string $flt_sfx The filter suffix as used in the filtering module
+     * @param   string  $flt_sfx  Суффикс фильтра, используемый в модуле фильтрации.
+     *                            The filter suffix as used in the filtering module
+     *
      * @return bool
      * @throws Exception
      * @since 1.0.0
      */
-    public function getDisplayControl($flt_sfx)
+    public function getDisplayControl( string $flt_sfx):bool
     {
         $display = false;
         $app = Factory::getApplication();
@@ -64,10 +76,6 @@ class DisplayManager
         $vm_mnf_id = $jinput->get('virtuemart_manufacturer_id', 0, 'array');
         $vm_prd_id = $jinput->get('virtuemart_product_id', 0, 'array');
         $is_published = $this->params->get($flt_sfx . '_published');
-
-
-
-
 
 
         // always visible in the cf pages
@@ -195,15 +203,18 @@ class DisplayManager
     }
 
     /**
+     * Проверьте, должно ли оно отображаться на основе настроек модуля фильтра
      * Check if a custom filter should be displayed based on the advanced settings of this filter
      *
-     * @param object $cf
+     * @param   stdClass  $cf  фильтр - основан на названии custom field
+     *
      * @return boolean
      *
      * @since 1.9.0
      */
-    public function displayCustomFilter($cf)
+    public function displayCustomFilter( stdClass $cf):bool
     {
+
         $cfparams = new Registry();
         $cfparams->loadString($cf->params, 'JSON');
         $flt_to_categories = $cfparams->get('filter_category_ids', []);

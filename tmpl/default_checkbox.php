@@ -34,7 +34,7 @@ if(empty($key)) {
      * @var array $Options
      */
     $Options = $filter->getOptions() ;
-
+        
 
 
 
@@ -48,8 +48,12 @@ if(empty($key)) {
 	    foreach ( $Options as $key => &$option )
 	    {
 		    $urlOption[] = \JRoute::_(  $urlHandler->getURL($filter, $option->id, $option->type) )  ;
+            
+            
 	    }#END FOREACH
 
+
+        
 
 
 
@@ -85,13 +89,7 @@ if(empty($key)) {
             $element_id = $display_key . '_elid' . $option->id;
             $option_url = \JRoute::_(  $urlHandler->getURL($filter, $option->id, $option->type) );
 
-	        if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-	        {
 
-		        echo'<pre>';print_r( $option );echo'</pre>'.__FILE__.' '.__LINE__;
-		        die(__FILE__ .' '. __LINE__ );
-
-	        }
 
             
             if (
