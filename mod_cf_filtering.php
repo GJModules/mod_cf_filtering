@@ -112,6 +112,13 @@ try
 	$Cache = \Joomla\CMS\Cache\Cache::getInstance('output', $options);
 	$dataCache = $Cache->get( $key );
 
+	$filters          = $FilteringHelper->getFilters();
+
+
+
+
+
+
 	if ( !$dataCache  )
 	{
 		/**
@@ -146,18 +153,15 @@ try
 		}
 
 	}#END IF
-	 
 
+	 $selected_filters = $FilteringHelper->getSelectedFilters();
 
-	$selected_filters = $FilteringHelper->getSelectedFilters();
 	$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 	$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
 
 	$cacheId = ModCfFilteringHelper::getCacheId($params, $module);
 
 	$cache = JFactory::getCache('mod_cf_filtering', '');
-
-
 
 	if (   !$htmlData = $cache->get($cacheId) )
 	{

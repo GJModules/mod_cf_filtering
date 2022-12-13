@@ -27,6 +27,8 @@ defined('_JEXEC') or die;
  */
 $indexfltrs_by_search_engines = $params->get('indexfltrs_by_search_engines', 0);
 
+//echo'<pre>';print_r( $option_url );echo'</pre>'.__FILE__.' '.__LINE__;
+//die(__FILE__ .' '. __LINE__ );
 
 if (empty($option_url)) {
     $option_url = \JRoute::_( $urlHandler->getURL($filter, $option->id, $option->type ));
@@ -49,14 +51,19 @@ $opt_class = !empty($opt_class) ? $opt_class : '';
 $display_key = $key.'_'.$module->id;
 $element_id = $display_key . '_elid' . $option->id;
 
+
+JLoader::register('seoTools_uri' , JPATH_ROOT .'/components/com_customfilters/include/seoTools_uri.php');
 $relNofollow = \seoTools_uri::checkUrlNoIndex( $option->option_sef_url->sef_url );
 $relNofollowAttr = ' rel="index, follow" '  ;
+
+
 
 
 if ( $relNofollow || $option->option_sef_url->no_index || !$indexfltrs_by_search_engines )
 {
 	$relNofollowAttr =    'rel="noindex, nofollow"' ;
 }#END IF
+
 
 ?>
 <!-- @START default_option_link  -->

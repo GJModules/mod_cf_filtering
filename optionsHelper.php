@@ -645,6 +645,109 @@ class OptionsHelper
 	    $db->setQuery($query);
 	    $activeOpt = $db->loadObjectList();
 
+
+		$FIELD_ARR = [
+			'custom_f_69'
+		];
+	    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	    {
+		    if ( !in_array( $field , $FIELD_ARR) )
+		    {
+			    /*foreach ( $activeOpt as  &$item )
+			    {
+				    preg_match( '/.+(\|.+)$/' , $item->id , $matches );
+				    if ( isset($matches[1]) && !empty( $matches[1] ) )
+				    {
+					    $item->id = str_replace( $matches[1] , '', $item->id );
+					    $item->name = str_replace( $matches[1] , '', $item->name );
+				    }#END IF
+
+
+			    }#END FOREACH*/
+
+			    /*$db = JFactory::getDbo();
+			    $table = $db->quoteName('#__virtuemart_product_customfields') ;
+			    $Query = $db->getQuery(true) ;
+			    $Query->select('*');
+				$Query->from( $table );
+
+				$where= [
+					$db->quoteName('virtuemart_custom_id') .   '=' .$db->quote(71)
+				];
+				$Query->where($where);
+				$db->setQuery( $Query );
+				$result = $db->loadObjectList( );
+//				echo '<br>------------<br>Query Dump :'.__FILE__ .' '.__LINE__ .$Query->dump().'------------<br>';
+
+
+			    $db = JFactory::getDbo();
+			    $query = $db->getQuery( true ) ;
+			    $conditions = array($db->quoteName('virtuemart_custom_id') . ' =  ' .$db->quote( 75 ) );
+			    $query->where($conditions);
+
+			    $query->delete( $db->quoteName('#__virtuemart_product_customfields'));
+//			    $db->setQuery($query)->execute();*/
+
+			    $columns = array(
+					'virtuemart_product_id',
+				    'virtuemart_custom_id',
+				    'customfield_value',
+				    'customfield_price' ,
+				    'disabler' ,
+				    'override' ,
+				    'noninheritable' ,
+				    'customfield_params' ,
+				    'product_sku' ,
+				    'product_gtin' ,
+				    'product_mpn' ,
+				    'published' ,
+				    'created_on' ,
+				    'created_by' ,
+				    'modified_on' ,
+				    'modified_by' ,
+				    'locked_on' ,
+				    'locked_by' ,
+				    'ordering' ,
+				    );
+			    /*foreach (  $result as &$item )
+			    {
+					unset($item->virtuemart_customfield_id ) ;
+					 $item->virtuemart_custom_id  = 75 ;
+					 $item->modified_by  = 111 ;
+				    preg_match( '/.+(\|.+)$/' , $item->customfield_value , $matches );
+				    if ( isset($matches[1]) && !empty( $matches[1] ) )
+				    {
+					    $item->customfield_value = str_replace( $matches[1] , '', $item->customfield_value );
+
+					    $query = $db->getQuery(true);
+
+					    $table = $db->quoteName('#__virtuemart_product_customfields') ;
+					    $values = [] ;
+					    foreach (  $item as  $key => $val )
+					    {
+						    $values[] = $db->quote( $val ) ;
+						}#END FOREACH
+
+					    $query->values(  implode(',' , $values ) );
+						$query->insert( $table )->columns( $db->quoteName( $columns ) );
+					    $db->setQuery($query);
+//					    $db->execute();
+//
+				    }#END IF
+			    }#END FOREACH*/
+
+
+		    }#END IF
+
+
+
+
+		    
+	    }
+	    
+
+
+		
 	    /**
 	     * Если $joinFieldData имеет значение true, все данные включаются в $activeOpt.
 	     * поэтому мы должны обращаться с ними соответствующим образом, например.
@@ -1989,7 +2092,7 @@ class OptionsHelper
         $varName = 'custom_f_'.$customfilter->custom_id;
         if(!isset($this->options[$varName])) {
 
-            echo'<pre>';print_r( $customfilter );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
+//            echo'<pre>';print_r( $customfilter );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
 
             $db = Factory::getDbo();
             $query = $db->getQuery(true);

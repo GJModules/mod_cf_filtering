@@ -324,6 +324,9 @@ class ModCfFilteringHelper
      */
     public function getFilters():array
     {
+
+
+
 	    /**
 	     * @var string $dependency_dir Зависимость направления
 	     */
@@ -358,10 +361,16 @@ class ModCfFilteringHelper
 	     */
         $selected_flt = \CfInput::getInputs();
 
+
+
+
 	    /**
 	     * Выбранные фильтры после кодирования вывода - строки кодируются в BIN
 	     */
         $this->selected_flt = \CfOutput::getOutput($selected_flt, true);
+
+
+
 
 	    /**
 	     * Содержит выборки, которые должны использоваться для каждого фильтра, когда зависимость идет сверху вниз

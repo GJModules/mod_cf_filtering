@@ -292,8 +292,25 @@ var customFilters = {
              */
             function testEmptyFilter(){
                 var $ = jQuery ;
+
+                // Проверяем selects - если есть выбранные - запрещаем перегружать страницу
+                var $selectFilters = $('select.cf_flt option:selected');
+                var isSelect = false ;
+                $selectFilters.each(function (i,a){
+                    if ( $(a).val().length ) isSelect = true ;
+                })
+                if (isSelect) return false ;
+
                 var checkBox = $('input.cf_flt[type="checkbox"]:checked')
+
+
+
+                console.log( 'general-uncompressed::testEmptyFilter' , $selectFilters ); 
+                  
+                
                 if ( typeof checkBox[0] === 'undefined' )  return true  ;
+
+                
 
                 return false ;
 
