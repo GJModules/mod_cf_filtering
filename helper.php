@@ -325,8 +325,6 @@ class ModCfFilteringHelper
     public function getFilters():array
     {
 
-
-
 	    /**
 	     * @var string $dependency_dir Зависимость направления
 	     */
@@ -360,9 +358,6 @@ class ModCfFilteringHelper
 	     * @var array $selected_flt the selected filters' options array;
 	     */
         $selected_flt = \CfInput::getInputs();
-
-
-
 
 	    /**
 	     * Выбранные фильтры после кодирования вывода - строки кодируются в BIN
@@ -599,6 +594,8 @@ class ModCfFilteringHelper
                         $filter->setDisplay($vm_manuf_disp_type);
                         $filter->setClearType('this');
                         $filter->setExpanded($this->moduleparams->get('manuf_flt_expanded', '1'));
+						
+						
                         if ($vm_manuf_disp_type != 1) {
                             $filter->setSmartSearch($this->moduleparams->get('manuf_flt_smart_search', '0'));
                         }
@@ -751,6 +748,10 @@ class ModCfFilteringHelper
                     if ($displayManager->getDisplayControl('custom_flt')) {
 
 	                    $custom_flt = cftools::getCustomFilters( $this->moduleparams );
+						
+
+
+
 
                         $cf_range_size = 6;
                         $cf_range_maxlength = 5;
@@ -769,15 +770,26 @@ class ModCfFilteringHelper
 		                        continue;
 	                        }
 
+	                        if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	                        {
+
+//		                        echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
+
+	                        }
+
                             $var_name = "custom_f_$cf->custom_id";
                             $key = $var_name;
                             // etc: custom_f_33_127
 							$display_key = $key . '_' . $this->module->id; // used as key to the html code
 
 
+
                             // load the params of that cf
                             $cfparams = new Registry();
                             $cfparams->loadString($cf->params, 'JSON');
+
+
+
 
                             // no smart search and scrollbar to drop-downs
                             // нет умного поиска и полосы прокрутки для выпадающих списков
@@ -787,6 +799,8 @@ class ModCfFilteringHelper
                                     $this->stylesDeclaration .= " #cf_list_$display_key { max-height:$maxHeight; overflow:auto; height:auto;}";
                                 }
                             }
+
+//	                         =============================================================================================
 
                             // selectable types
                             if ( strpos($cf->disp_type, CfFilter::DISPLAY_INPUT_TEXT) === false
@@ -799,7 +813,15 @@ class ModCfFilteringHelper
 	                             * Создание блоков фильтров Custom Field
 	                             */
                                 $filter = $this->getFilter($var_name, Text::_($cf->custom_title), true);
-	                            if(!isset($filter)) continue;
+
+	                            if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	                            {
+//		                            echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
+//		                            die(__FILE__ .' '. __LINE__ );
+
+	                            }
+
+								if(!isset($filter)) continue;
 
 
 
@@ -856,6 +878,8 @@ class ModCfFilteringHelper
                             // Set the filter, only if it has values
                             if ( !empty($filter->getOptions())) {
 
+
+
 								$filter->setClearType('this');
                                 $filter->setDisplay($cf->disp_type);
                                 $filter->setExpanded($cfparams->get('expanded', '1'));
@@ -868,7 +892,7 @@ class ModCfFilteringHelper
 
 
 
-                            // profiler
+	                        // profiler
                             if ($profilerParam) {
                                 $this->profiler->mark($var_name);
                             }
@@ -1077,7 +1101,7 @@ class ModCfFilteringHelper
 			
 			if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 			{
-			    echo'<pre>';print_r( $var_name );echo'</pre>'.__FILE__.' '.__LINE__;
+			    echo'<pre>';print_r( $results );echo'</pre>'.__FILE__.' '.__LINE__;
 			    die(__FILE__ .' '. __LINE__ );
 
 			}
@@ -1124,14 +1148,11 @@ class ModCfFilteringHelper
 		// Если режим отображения опций - не привязанных ни к одному товару - "Прятать"
 	    elseif ($display_empty_opt == '0')
 	    {
-			 
-		    // Получить Активные опции для фильтра etc/ $var_name == "custom_f_29"
+
+		    // Получить Активные опции для фильтра (т.е - те которые можно будет выбрать ) etc/ $var_name == "custom_f_29"
 		    $options_ar = $this->optionsHelper->getActiveOptions($var_name, $joinFieldData = true);
-			if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-			{
-//			    echo'<pre>';print_r( $options_ar );echo'</pre>'.__FILE__.' '.__LINE__;
-			    
-			}
+
+
 
 		    // это исправляет аномалию в optionsHelper. Он всегда возвращает опцион на акцию, даже если счетчик равен 0.
 		    // this fixes an anomaly in optionsHelper. It always return an option for the stock, even with 0 counter
@@ -1213,6 +1234,10 @@ class ModCfFilteringHelper
             $filter->setDisplay($disp_type);
             $filter->setHeader($header);
             $filter->setCounter($displayCounter);
+
+
+
+
 
 			$options = [];
 

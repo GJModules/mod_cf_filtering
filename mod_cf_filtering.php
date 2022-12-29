@@ -112,10 +112,11 @@ try
 	$Cache = \Joomla\CMS\Cache\Cache::getInstance('output', $options);
 	$dataCache = $Cache->get( $key );
 
-	$filters          = $FilteringHelper->getFilters();
+	if ( $_SERVER[ 'REMOTE_ADDR' ] == DEV_IP )
+	{
+		$dataCache = false ;
 
-
-
+	}
 
 
 

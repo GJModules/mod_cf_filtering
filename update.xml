@@ -4,7 +4,7 @@
         <description><![CDATA[Модуль вывода фильтров для VM]]></description>
         <type>module</type>
         <element>mod_cf_filtering</element>
-        <version>3.10.14</version>
+        <version>3.10.20</version>
         <client>site</client>
         <infourl title="Joomla!">https://www.joomla.org/announcements/release-news/5765-joomla-3-9-6-release.html
         </infourl>

@@ -200,8 +200,16 @@ class OptionsHelper
      * @throws Exception
      * @since 2.7.0
      */
-    public static function getInstance($params, $module = null)
+    public static function getInstance($params = null , $module = null)
     {
+		/*if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+		    echo'<pre>';print_r( $params );echo'</pre>'.__FILE__.' '.__LINE__;
+		    echo'<pre>';print_r( $module );echo'</pre>'.__FILE__.' '.__LINE__;
+		    die(__FILE__ .' '. __LINE__ );
+
+		}*/
+
         $key = 0;
         if(isset($module)) {
             $key = $module->id;
@@ -323,7 +331,7 @@ class OptionsHelper
 	protected static $ActiveOptions = [] ;
 
 	/**
-	 * Получить активные параметры текущего фильтра, используя зависимости от выбора в других фильтрах
+	 * Получить активные ОПЦИИ текущего фильтра , используя зависимости от выбора в других фильтрах
 	 * --
 	 * Get the active options of a current filter using dependencies from the selections in other filters
 	 *
@@ -369,7 +377,10 @@ class OptionsHelper
         $returned_products = $this->componentparams->getReturnedProductsType();
         $filtered_products = $this->componentparams->getFilteredProductsType();
 
-        // если зависимость работает сверху вниз, получить выбранные фильтры, хранящиеся в "selected_fl_per_flt"
+
+
+
+	    // если зависимость работает сверху вниз, получить выбранные фильтры, хранящиеся в "selected_fl_per_flt"
 	    // if the dependency works from top to bottom, get the selected filters as stored in the "selected_fl_per_flt"
         if (isset($this->selected_fl_per_flt)) {
             if (isset($this->selected_fl_per_flt[$field])) {
@@ -395,6 +406,8 @@ class OptionsHelper
             $selected_flt = $this->selected_flt;
         }
 
+
+
         if (strpos( $field, 'custom_f_') !== false) {
             // get the filter id
             preg_match('/[0-9]+/', $field, $mathces);
@@ -410,7 +423,10 @@ class OptionsHelper
         $db = Factory::getDbo();
         $query = $db->getQuery(true);
         $query = $this->buildQuery( $query, $field, $customfilter , true);
-        if(empty((string)$query)) {
+
+
+
+		if(empty((string)$query)) {
             return [];
         }
 
@@ -426,6 +442,8 @@ class OptionsHelper
         if ($is_customfield !== false) {
             $this->table_db_flds[$field] = 'cfp';
         }
+
+
 
 	    // перебрать фильтры с выбранными опциями -- и присоединиться к соответствующим таблицам
 	    // iterate through the selected variables and join the relevant tables
@@ -454,10 +472,10 @@ class OptionsHelper
              */
             if (strpos($key, 'custom_f_') !== false) {
 
-                // get the filter id
+	            // get the filter id
                 preg_match('/[0-9]+/', $key, $mathces);
 
-                /**
+	            /**
                  * Не учитывать переменную, если:
                  * а) Не существует.
                  * б) Зависит от этого фильтра. Родительские фильтры не должны зависеть от их зависимых (подфильтров).
@@ -535,12 +553,14 @@ class OptionsHelper
 
                         $innerJoins[] = "$curSelectionTable AS $key ON {$key}.virtuemart_product_id=p.virtuemart_product_id";
                     }
+
                 }
+
             }
             // keyword
             elseif ($key == 'q') {
 
-                // if the $where_productIds is not empty, then this var contains also the products from searches and ranges and will be added later
+	            // if the $where_productIds is not empty, then this var contains also the products from searches and ranges and will be added later
                 if (!empty($where_productIds)) {
                     continue;
                 }
@@ -558,9 +578,16 @@ class OptionsHelper
             }
             // other filters than customfilters but not product_price or keyword (i.e. categories, manufacturers)
             elseif ($key != 'price') {
-                $sel_field = $key;
-                $where[] = "{$this->table_db_flds[$key]}.{$sel_field} IN (" . implode(' ,', $ar_value) . ")";
 
+
+	            $sel_field = $key;
+                $where[] = "{$this->table_db_flds[$key]}.{$sel_field} IN (" . implode(' ,', $ar_value) . ")";
+	            /*if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	            {
+		            echo'<pre>';print_r( $key );echo'</pre>'.__FILE__.' '.__LINE__;
+		            echo'<pre>';print_r( $where );echo'</pre>'.__FILE__.' '.__LINE__;
+
+	            }*/
                 /*
                  * lookup for filters into the parent or the child products
                  * This is designated by the use of the $returned_products component setting
@@ -577,7 +604,12 @@ class OptionsHelper
                     $innerJoins[] = "{$this->table_db_flds[$key]} ON p.virtuemart_product_id = {$this->table_db_flds[$key]}.virtuemart_product_id";
                 }
             }
+
+
+
         }# END FOREACH
+
+
 
 	    /**
 	     * Если мы ищем ценовые диапазоны, мы не должны принимать во внимание продукты, возвращаемые текущим ценовым поиском,
@@ -627,6 +659,7 @@ class OptionsHelper
                 $where[] = 'cf.virtuemart_custom_id=' . (int) $mathcess[0];
             }
         }
+		
 
         // если мы передаем пустой $where, это приводит к ошибке sql
 	    // if we pass an empty $where, ends up in sql error
@@ -642,112 +675,32 @@ class OptionsHelper
             $query->leftJoin(implode(' LEFT JOIN ', $leftJoins));
         }
 
+
+
+		$filterParams = json_decode( $customfilter->params ) ;
+	    if ( isset( $filterParams->exceptions ) )
+	    {
+		    $resultTestCategories = array_intersect( $selected_flt['virtuemart_category_id'] , $filterParams->exceptions->categories );
+		    if ( !empty( $resultTestCategories ) && !empty( $filterParams->exceptions->values ) )
+		    {
+			    $exceptionsValues = array_map([$db, 'quote'], $filterParams->exceptions->values );
+			    $query->where( sprintf('cfp.customfield_value NOT IN  (%s)', join(',', $exceptionsValues )));
+		    }#END IF
+	    }#END IF
+
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+//		    echo'<pre>';print_r( $query->dump() );echo'</pre>'.__FILE__.' '.__LINE__;
+//		    die(__FILE__ .' '. __LINE__ );
+
+		}
 	    $db->setQuery($query);
 	    $activeOpt = $db->loadObjectList();
 
 
-		$FIELD_ARR = [
-			'custom_f_69'
-		];
-	    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-	    {
-		    if ( !in_array( $field , $FIELD_ARR) )
-		    {
-			    /*foreach ( $activeOpt as  &$item )
-			    {
-				    preg_match( '/.+(\|.+)$/' , $item->id , $matches );
-				    if ( isset($matches[1]) && !empty( $matches[1] ) )
-				    {
-					    $item->id = str_replace( $matches[1] , '', $item->id );
-					    $item->name = str_replace( $matches[1] , '', $item->name );
-				    }#END IF
-
-
-			    }#END FOREACH*/
-
-			    /*$db = JFactory::getDbo();
-			    $table = $db->quoteName('#__virtuemart_product_customfields') ;
-			    $Query = $db->getQuery(true) ;
-			    $Query->select('*');
-				$Query->from( $table );
-
-				$where= [
-					$db->quoteName('virtuemart_custom_id') .   '=' .$db->quote(71)
-				];
-				$Query->where($where);
-				$db->setQuery( $Query );
-				$result = $db->loadObjectList( );
-//				echo '<br>------------<br>Query Dump :'.__FILE__ .' '.__LINE__ .$Query->dump().'------------<br>';
-
-
-			    $db = JFactory::getDbo();
-			    $query = $db->getQuery( true ) ;
-			    $conditions = array($db->quoteName('virtuemart_custom_id') . ' =  ' .$db->quote( 75 ) );
-			    $query->where($conditions);
-
-			    $query->delete( $db->quoteName('#__virtuemart_product_customfields'));
-//			    $db->setQuery($query)->execute();*/
-
-			    $columns = array(
-					'virtuemart_product_id',
-				    'virtuemart_custom_id',
-				    'customfield_value',
-				    'customfield_price' ,
-				    'disabler' ,
-				    'override' ,
-				    'noninheritable' ,
-				    'customfield_params' ,
-				    'product_sku' ,
-				    'product_gtin' ,
-				    'product_mpn' ,
-				    'published' ,
-				    'created_on' ,
-				    'created_by' ,
-				    'modified_on' ,
-				    'modified_by' ,
-				    'locked_on' ,
-				    'locked_by' ,
-				    'ordering' ,
-				    );
-			    /*foreach (  $result as &$item )
-			    {
-					unset($item->virtuemart_customfield_id ) ;
-					 $item->virtuemart_custom_id  = 75 ;
-					 $item->modified_by  = 111 ;
-				    preg_match( '/.+(\|.+)$/' , $item->customfield_value , $matches );
-				    if ( isset($matches[1]) && !empty( $matches[1] ) )
-				    {
-					    $item->customfield_value = str_replace( $matches[1] , '', $item->customfield_value );
-
-					    $query = $db->getQuery(true);
-
-					    $table = $db->quoteName('#__virtuemart_product_customfields') ;
-					    $values = [] ;
-					    foreach (  $item as  $key => $val )
-					    {
-						    $values[] = $db->quote( $val ) ;
-						}#END FOREACH
-
-					    $query->values(  implode(',' , $values ) );
-						$query->insert( $table )->columns( $db->quoteName( $columns ) );
-					    $db->setQuery($query);
-//					    $db->execute();
-//
-				    }#END IF
-			    }#END FOREACH*/
-
-
-		    }#END IF
 
 
 
-
-		    
-	    }
-	    
-
-
-		
 	    /**
 	     * Если $joinFieldData имеет значение true, все данные включаются в $activeOpt.
 	     * поэтому мы должны обращаться с ними соответствующим образом, например.
@@ -765,10 +718,15 @@ class OptionsHelper
                         $sort_by = 'default_values';
                     }
 
+
+
                     /**
-                     * Создать MD5 из значения
+                     * Создать MD5 из значения фильтра
                      */
                     $activeOpt = $this->encodeOptions($activeOpt);
+
+
+
 
                     if ($sort_by == 'name') {
                         $this->sort_by($sort_by, $activeOpt);
@@ -2086,8 +2044,12 @@ class OptionsHelper
      */
     public function getCustomOptions($customfilter)
     {
-//        echo'<pre>';print_r( $customfilter );echo'</pre>'.__FILE__.' '.__LINE__ .'<br>';
-//        die( __FILE__ .' : ' . __LINE__);
+        if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+        {
+            echo'<pre>';print_r( $customfilter );echo'</pre>'.__FILE__.' '.__LINE__;
+            die(__FILE__ .' '. __LINE__ );
+
+        }
 
         $varName = 'custom_f_'.$customfilter->custom_id;
         if(!isset($this->options[$varName])) {

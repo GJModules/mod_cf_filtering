@@ -56,9 +56,6 @@ JLoader::register('seoTools_uri' , JPATH_ROOT .'/components/com_customfilters/in
 $relNofollow = \seoTools_uri::checkUrlNoIndex( $option->option_sef_url->sef_url );
 $relNofollowAttr = ' rel="index, follow" '  ;
 
-
-
-
 if ( $relNofollow || $option->option_sef_url->no_index || !$indexfltrs_by_search_engines )
 {
 	$relNofollowAttr =    'rel="noindex, nofollow"' ;
@@ -92,16 +89,6 @@ if ( $relNofollow || $option->option_sef_url->no_index || !$indexfltrs_by_search
 <!-- @END default_option_link  -->
 <?php
 
-if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-{
-//    echo'<pre>';print_r( $option->counter );echo'</pre>'.__FILE__.' '.__LINE__;
-//    echo'<pre>';print_r( $filter->getCounter() );echo'</pre>'.__FILE__.' '.__LINE__;
-//$app = \Joomla\CMS\Factory::getApplication();
-//echo'<pre>';print_r( $option->counter );echo'</pre>'.__FILE__.' '.__LINE__;
-//die(__FILE__ .' '. __LINE__ );
-
-
-}
 
 if($filter->getCounter() && isset($option->counter)):?>
     <span class="cf_flt_counter">(<?php echo $option->counter?>)</span>
