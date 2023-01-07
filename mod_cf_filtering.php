@@ -56,17 +56,7 @@ $profiler->mark('Start Module');
 
 
 
-try
-{
-	$FilteringHelper = new ModCfFilteringHelper($params, $module);
-}
-catch (\Exception $e)
-{
-	// Executed only in PHP 5, will not be reached in PHP 7
-	echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
-	echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
-	die(__FILE__ .' '. __LINE__ );
-}
+
 
 //require_once dirname(__FILE__) . '/helper.php';
 
@@ -89,16 +79,29 @@ $doc->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css' . '
 
 
 
+$cacheId = ModCfFilteringHelper::getCacheId($params, $module);
+$cache = JFactory::getCache('mod_cf_filtering', '');
+if ( $params->get( 'cache_on' , 1 ) &&  !$htmlData = $cache->get($cacheId) )
+{
 
+}
+
+
+if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+{
+	$profiler->mark('Start module mod_cf_filtering');
+}
 
 try
 {
 
-	// TODO*** Отключил Кэширование
-	$params->set( 'cache_on' , 0 ) ;
+	if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	{
+		// TODO*** Отключил Кэширование
+		//			$params->set( 'cache_on' , 0 ) ;
+	}
 
-
-
+/*
 	// Настройуи кеша
 	$options = array(
 		'defaultgroup' => 'mod_cf_filtering_data',
@@ -112,19 +115,10 @@ try
 	$Cache = \Joomla\CMS\Cache\Cache::getInstance('output', $options);
 	$dataCache = $Cache->get( $key );
 
-	if ( $_SERVER[ 'REMOTE_ADDR' ] == DEV_IP )
-	{
-		$dataCache = false ;
-
-	}
-
-
-
 	if ( !$dataCache  )
 	{
-		/**
-		 * Получить все фильтры с опциями для модуля
-		 */
+		// Получить все фильтры с опциями для модуля
+		$FilteringHelper = new ModCfFilteringHelper($params, $module);
 		$filters          = $FilteringHelper->getFilters();
 		$scriptVars = $FilteringHelper->getScriptVars();
 
@@ -133,18 +127,15 @@ try
 			'scriptVars' => $scriptVars ,
 		];
 		$Cache->store( $dataCache , $key );
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-			$profiler->mark('GetDataNoCache');
-			$__timeDev = $profiler->getBuffer();
-			echo'<pre>';print_r( $__timeDev );echo'</pre>'.__FILE__.' '.__LINE__;
-			
-			echo'<pre style="color:red">';print_r( 'Данные генерировались NEW' );echo'</pre>';
-		}
-	}else{
+
+	}
+	else{
+		$FilteringHelper = new ModCfFilteringHelper($params, $module);
 		$filters = $dataCache['filters'];
 		// Устанавливаем данные из кеша
 		$FilteringHelper->setScriptVars( $dataCache['scriptVars'] );
+
+
 		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 		{
 			$profiler->mark('GetDataCache');
@@ -154,18 +145,21 @@ try
 		}
 
 	}#END IF
+#*/
 
-	 $selected_filters = $FilteringHelper->getSelectedFilters();
 
-	$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
-	$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
-
-	$cacheId = ModCfFilteringHelper::getCacheId($params, $module);
-
-	$cache = JFactory::getCache('mod_cf_filtering', '');
-
-	if (   !$htmlData = $cache->get($cacheId) )
+	if (  !$htmlData = $cache->get($cacheId) )
 	{
+		// Получить все фильтры с опциями для модуля
+		$FilteringHelper = new ModCfFilteringHelper($params, $module);
+
+		$filters          = $FilteringHelper->getFilters();
+		$scriptVars = $FilteringHelper->getScriptVars();
+
+		$selected_filters = $FilteringHelper->getSelectedFilters();
+		$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+		$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
+
 		ob_start();
 
 		require($LayoutPath);
@@ -178,12 +172,24 @@ try
 			$cache->store($htmlData, $cacheId);
 		}#END IF
 
+
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+			$profiler->mark('Create - cache - store ');
+			echo'<pre style="color:green">';print_r( 'Данные взяты из Cache' );echo'</pre>';
+		}
 	}
+	else{
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+			$profiler->mark('GetDataCache');
+			echo'<pre style="color:green">';print_r( 'HTML - модуля "mod_cf_filtering" - получены из Cache' );echo'</pre>';
+		}
+	}
+
 	echo $htmlData;
 	$profiler->mark('End module');
 
-
-//         throw new \Exception('Code Exception '.__FILE__.':'.__LINE__) ;
 }
 catch (\Error $e)
 {
@@ -204,7 +210,7 @@ if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 //	echo'<pre>';print_r( $params->get( 'cache_on' , 1 ) );echo'</pre>'.__FILE__.' '.__LINE__;
 
 	$pageCreationTime = $profiler->getBuffer();
-//	echo'<pre>';print_r( $pageCreationTime );echo'</pre>'.__FILE__.' '.__LINE__;
+	echo'<pre>';print_r( $pageCreationTime );echo'</pre>'.__FILE__.' '.__LINE__;
 //	die(__FILE__ .' '. __LINE__ );
 
 }
