@@ -688,17 +688,19 @@ class OptionsHelper
 		    }#END IF
 	    }#END IF
 
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-//		    echo'<pre>';print_r( $query->dump() );echo'</pre>'.__FILE__.' '.__LINE__;
-//		    die(__FILE__ .' '. __LINE__ );
 
-		}
 	    $db->setQuery($query);
 	    $activeOpt = $db->loadObjectList();
 
 
-
+	    if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+	    {
+//		    echo'<pre>';print_r( $query->dump() );echo'</pre>'.__FILE__.' '.__LINE__;
+//		    echo'<pre>';print_r( $activeOpt );echo'</pre>'.__FILE__.' '.__LINE__;
+//		    echo'<pre>';print_r( empty( $activeOpt ) );echo'</pre>'.__FILE__.' '.__LINE__;
+//		    die(__FILE__ .' '. __LINE__ );
+//
+	    }
 
 
 	    /**
@@ -709,48 +711,52 @@ class OptionsHelper
 	     * If $joinFieldData is true all the data are included in the $activeOpt
 	     * so we have to handle them accordingly e.g. Create category levels or encode cf values
 	     */
-        if (! empty($activeOpt)) {
-            if ($joinFieldData) {
+	    if ( !empty( $activeOpt ) )
+	    {
+		    if ( $joinFieldData )
+		    {
 
-                if ( $is_customfield !== false && !empty($activeOpt)) {
-                    $sort_by = 'name';
-                    if (($customfilter->is_list && ! empty($customfilter->custom_value)) || $customfilter->field_type == 'E') {
-                        $sort_by = 'default_values';
-                    }
-
-
-
-                    /**
-                     * Создать MD5 из значения фильтра
-                     */
-                    $activeOpt = $this->encodeOptions($activeOpt);
+			    if ( $is_customfield !== false && !empty( $activeOpt ) )
+			    {
+				    $sort_by = 'name';
+				    if ( ( $customfilter->is_list && !empty( $customfilter->custom_value ) ) || $customfilter->field_type == 'E' )
+				    {
+					    $sort_by = 'default_values';
+				    }
 
 
+				    /**
+				     * Создать MD5 из значения фильтра
+				     */
+				    $activeOpt = $this->encodeOptions( $activeOpt );
 
 
-                    if ($sort_by == 'name') {
-                        $this->sort_by($sort_by, $activeOpt);
-                    }
-                }
-            } else {
+				    if ( $sort_by == 'name' )
+				    {
+					    $this->sort_by( $sort_by , $activeOpt );
+				    }
+			    }
+		    }
+		    else
+		    {
 
-                // convert to hexademical if custom filters
-                if ($is_customfield !== false) {
-                    $activeOptions = array();
-                    if (is_array($activeOpt)) {
-                        $activeOpt = $this->encodeOptions($activeOpt);
-                    }
-                }
-            }
+			    // convert to hexademical if custom filters
+			    if ( $is_customfield !== false )
+			    {
+				    $activeOptions = array();
+				    if ( is_array( $activeOpt ) )
+				    {
+					    $activeOpt = $this->encodeOptions( $activeOpt );
+				    }
+			    }
+		    }
 
+		    if ( !empty( $activeOpt ) )
+		    {
+			    $activeOptions = cftools::arrayFromValList( $activeOpt );
+		    }
 
-
-            if (! empty($activeOpt)) {
-
-                $activeOptions = cftools::arrayFromValList($activeOpt);
-            }
-
-        }
+	    }
 
 
 
