@@ -771,6 +771,8 @@ var customFilters = {
         //load the breadcrumbs modules
         var breadcrumbModuleIds = customFilters.getBreadcrumbModules();
         var moduleUrl = customFiltersProp[module_id].base_url + 'index.php?option=com_customfilters&view=module';
+
+        moduleUrl = window.location.href + '?option=com_customfilters&view=module'
         for (var i = 0; i < breadcrumbModuleIds.length; i++) {
             customFilters.loadModule(event = undefined, breadcrumbModuleIds[i], moduleUrl);
         }

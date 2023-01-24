@@ -78,6 +78,7 @@ class ModCfFilteringHelper
 	 * it holds info about the current currency
 	 *
 	 * @var stdClass
+	 * @since 3.9
 	 */
 	public $currency_info;
 	/**
@@ -97,6 +98,7 @@ class ModCfFilteringHelper
 	 * contains the functions/operations which will be executed in a domready event
 	 *
 	 * @var array
+	 * @since 3.9
 	 */
 	public $scriptProcesses = [];
 	/**
@@ -216,43 +218,55 @@ class ModCfFilteringHelper
 	}
 
 	/**
-	 * @param   stdClass  $options
+	 * Получить разметку HTML для фильтра
 	 *
-	 * @return ModCfFilteringHelper
+	 * @param   stdClass  $module
+	 * @param   Registry  $params
 	 *
+	 * @return false|string
 	 * @throws Exception
-	 * @since version
+	 * @since 3.9
 	 */
-	/*public static function instance( $options = array() ): ModCfFilteringHelper
+	public static function getHtmlFilterCache( stdClass $module , Registry $params )
 	{
-		if ( self::$instance === null ){
-			self::$instance = new self($options);
+		// Получить все фильтры с опциями для модуля
+		$FilteringHelper = new ModCfFilteringHelper($params, $module);
+
+		$filters          = $FilteringHelper->getFilters();
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+//		    echo'<pre>';print_r( $filters );echo'</pre>'.__FILE__.' '.__LINE__;
+//		    die(__FILE__ .' '. __LINE__ );
+
 		}
-		return self::$instance;
-	}#END FN*/
+		$scriptVars = $FilteringHelper->getScriptVars();
 
-	/*public static  function ModuleInit( $params  )
-	{
-		$module = JModuleHelper::getModule( 'mod_cf_filtering'  );
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+//		    echo'<pre>';print_r( $filters );echo'</pre>'.__FILE__.' '.__LINE__;
+//		    die(__FILE__ .' '. __LINE__ );
 
+		}
 
-		$layout = $params->get('layout', 'default') ;
-		// $LayoutPath == /templates/marketprofil/html/mod_cf_filtering/default.php
-		$LayoutPath = JModuleHelper::getLayoutPath('mod_cf_filtering', $layout) ;
+		$selected_filters = $FilteringHelper->getSelectedFilters();
+		$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+		$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+// 		    echo'<pre>';print_r( $LayoutPath );echo'</pre>'.__FILE__.' '.__LINE__;
+//			 die(__FILE__ .' '. __LINE__ );
 
-
+ 		}
 		ob_start();
 
-		echo '<div id="mod_menu_categories_shop-Data"></div>';
-//		echo '<template id="mod_menu_categories_shop-Template">';
-		require(  $LayoutPath );
-//		echo '</template>';
+		require($LayoutPath);
+		// выполняем действия и сохраняем результат в $somevariable
 		$htmlData = ob_get_contents();
 		ob_end_clean();
 
-
 		return $htmlData ;
-	}*/
+
+	}
 
 	/**
 	 * Получить идентификатор Cache
@@ -260,7 +274,7 @@ class ModCfFilteringHelper
 	 * @throws Exception
 	 * @since version
 	 */
-	public static function getCacheId( $moduleparams , $module )
+	public static function getCacheId( $moduleParams , $module ):string
 	{
 		$input        = \JFactory::getApplication()->input;
 		$uri          = $input->getArray();
@@ -270,18 +284,7 @@ class ModCfFilteringHelper
 		$uri  = \Joomla\CMS\Uri\Uri::getInstance();
 		$link = $uri->toString( array( 'path' , 'query' , 'fragment' ) );
 
-
-		/*foreach ($cacheparams->modeparams as $key => $value)
-		{
-			// Use int filter for id/catid to clean out spamy slugs
-			if (isset($uri[$key])   )
-			{
-				$safeuri->$key = $noHtmlFilter->clean($uri[$key], $value);
-			}
-		}*/
-
-
-		return md5( serialize( array( $link , $moduleparams , $module->id ) ) );
+		return md5( serialize( array( $link , $moduleParams , $module->id ) ) );
 	}
 
 
@@ -333,11 +336,21 @@ class ModCfFilteringHelper
 		 */
 		$selected_flt = \CfInput::getInputs();
 
+
+
+		
 		/**
 		 * Выбранные фильтры после кодирования вывода - строки кодируются в BIN
 		 */
 		$this->selected_flt = \CfOutput::getOutput( $selected_flt , true );
 
+
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+//			echo'<pre>';print_r( $selected_flt );echo'</pre>'.__FILE__.' '.__LINE__;
+//			die(__FILE__ .' '. __LINE__ );
+
+		}
 
 		/**
 		 * Содержит выборки, которые должны использоваться для каждого фильтра, когда зависимость идет сверху вниз
@@ -349,6 +362,8 @@ class ModCfFilteringHelper
 		{
 			$this->selected_fl_per_flt = \CfOutput::getOutput( CfInput::getInputsPerFilter( $this->module ) , true , true );
 		}
+
+
 
 		/**
 		 * check if reset is active
@@ -932,6 +947,7 @@ class ModCfFilteringHelper
 		if ( $profilerParam ) \cftools::printProfiler( $this->profiler );
 
 
+
 		if ( count( $this->filters ) > 0 )
 		{
 			$this->scriptVars[ 'parent_link' ] = $this->moduleparams->get( 'category_flt_parent_link' , 0 );
@@ -1022,6 +1038,15 @@ class ModCfFilteringHelper
 
 		$seoTools->updateSeoTable( $optionsFilterArr );
 
+
+		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
+		{
+//			echo'<pre>';print_r( $this->filters );echo'</pre>'.__FILE__.' '.__LINE__;
+//			echo'<pre>';print_r( $this->selected_flt );echo'</pre>'.__FILE__.' '.__LINE__;
+//			echo'<pre>';print_r( $this->selected_fl_per_flt );echo'</pre>'.__FILE__.' '.__LINE__;
+//			die(__FILE__ .' '. __LINE__ );
+
+		}
 
 		return $this->filters;
 	}

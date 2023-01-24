@@ -420,9 +420,12 @@ class OptionsHelper
 			$customfilter = $custom_filters[$filterCustomId];
         }
 
+
         $db = Factory::getDbo();
         $query = $db->getQuery(true);
-        $query = $this->buildQuery( $query, $field, $customfilter , true);
+
+
+		$query = $this->buildQuery( $query, $field, $customfilter , true);
 
 
 

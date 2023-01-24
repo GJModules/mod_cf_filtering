@@ -139,9 +139,9 @@ if(empty($key)) {
                         ?>
                         <!-- Start layout default_option_link -->
                         <?php
-	                    $profiler->mark('Before require default_option_link ');
+//	                    $profiler->mark('Before require default_option_link ');
                         require JModuleHelper::getLayoutPath('mod_cf_filtering', 'default_option_link');
-	                    $profiler->mark('After require default_option_link ');
+//	                    $profiler->mark('After require default_option_link ');
                         ?>
                         <!-- End layout default_option_link -->
                         <?php

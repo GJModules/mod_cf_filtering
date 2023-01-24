@@ -10,7 +10,6 @@ use Joomla\CMS\Cache\Cache;
 use Joomla\CMS\Factory;
 
 defined('_JEXEC') or die(); // no direct access
-
 if (!defined('DEV_IP'))  define('DEV_IP',     '***.***.***.***');
 
 //load dependencies
@@ -40,7 +39,6 @@ JFactory::getDocument()->addStyleDeclaration('
     body{
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important ; 
     }
-     
 ');
 
 
@@ -51,22 +49,20 @@ JFactory::getDocument()->addStyleDeclaration('
  * @var ModCfFilteringHelper     $FilteringHelper
  */
 $doc = Factory::getDocument();
-$profiler = \JProfiler::getInstance('PRO_Application - module');
-$profiler->mark('Start Module');
 
-
-
-
+if ( $_SERVER['REMOTE_ADDR'] ==  DEV_IP ) $profiler = \JProfiler::getInstance('PRO_Application - module');
+if ( $_SERVER['REMOTE_ADDR'] ==  DEV_IP ) $profiler->mark('Start module mod_cf_filtering');
 
 //require_once dirname(__FILE__) . '/helper.php';
 
 
 
-\VmConfig::loadConfig();
+
 JText::script('MOD_CF_FILTERING_INVALID_CHARACTER');
 JText::script('MOD_CF_FILTERING_PRICE_MIN_PRICE_CANNOT_EXCEED_MAX_PRICE');
 JText::script('MOD_CF_FILTERING_MIN_CHARACTERS_LIMIT');
 
+\VmConfig::loadConfig();
 $jlang = \JFactory::getLanguage();
 $jlang->load('com_customfilters');
 $jlang->load('com_virtuemart');
@@ -81,122 +77,50 @@ $doc->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css' . '
 
 $cacheId = ModCfFilteringHelper::getCacheId($params, $module);
 $cache = JFactory::getCache('mod_cf_filtering', '');
-if ( $params->get( 'cache_on' , 1 ) &&  !$htmlData = $cache->get($cacheId) )
-{
-
-}
-
-
-if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-{
-	$profiler->mark('Start module mod_cf_filtering');
-}
 
 try
 {
 
+	$app = \Joomla\CMS\Factory::getApplication();
+	$juri = \Joomla\CMS\Uri\Uri::getInstance();
+	$filterUrl = $juri->getPath();
+	$view = $app->input->get('view' , false , 'STRING ') ;
+	$app->input->set('filter-url' , md5( $filterUrl ) );
+
+	$cacheparams = new stdClass;
+	$cacheparams->cachemode = 'safeuri';
+	$cacheparams->class = 'ModCfFilteringHelper';
+	$cacheparams->method = 'getHtmlFilterCache';
+	$cacheparams->methodparams = [ $module , $params ];
+
+
+	$cacheparams->modeparams = [
+		'Itemid' => 'INT',
+		'module_id' => 'INT',
+		'virtuemart_category_id' => 'ARRAY',
+		'virtuemart_manufacturer_id' => 'ARRAY',
+		'filter-url' => 'STRING',
+	];
+
+	// Отключить Cache - для Developer
 	if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 	{
-		// TODO*** Отключил Кэширование
-		//			$params->set( 'cache_on' , 0 ) ;
+		$params->set('owncache' , 0 );
 	}
 
-/*
-	// Настройуи кеша
-	$options = array(
-		'defaultgroup' => 'mod_cf_filtering_data',
-		'browsercache' => false,
-		'caching'      => 1,
-	);
-	// ключ кеша страницы
-	$parts[] = \JUri::getInstance()->toString();
-	$key = md5(serialize($parts));
-
-	$Cache = \Joomla\CMS\Cache\Cache::getInstance('output', $options);
-	$dataCache = $Cache->get( $key );
-
-	if ( !$dataCache  )
+	if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 	{
-		// Получить все фильтры с опциями для модуля
-		$FilteringHelper = new ModCfFilteringHelper($params, $module);
-		$filters          = $FilteringHelper->getFilters();
-		$scriptVars = $FilteringHelper->getScriptVars();
-
-		$dataCache = [
-			'filters' => $filters ,
-			'scriptVars' => $scriptVars ,
-		];
-		$Cache->store( $dataCache , $key );
+//	    echo'<pre>';print_r( $view );echo'</pre>'.__FILE__.' '.__LINE__;
+//	    die(__FILE__ .' '. __LINE__ );
 
 	}
-	else{
-		$FilteringHelper = new ModCfFilteringHelper($params, $module);
-		$filters = $dataCache['filters'];
-		// Устанавливаем данные из кеша
-		$FilteringHelper->setScriptVars( $dataCache['scriptVars'] );
-
-
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-			$profiler->mark('GetDataCache');
-			$__timeDev = $profiler->getBuffer();
-			echo'<pre>';print_r( $__timeDev );echo'</pre>'.__FILE__.' '.__LINE__;
-			echo'<pre style="color:green">';print_r( 'Данные взяты из Cache' );echo'</pre>';
-		}
-
+	if ( $view != 'productdetails' )
+	{
+		$htmlData = \Joomla\CMS\Helper\ModuleHelper::moduleCache($module, $params, $cacheparams);
+		echo $htmlData ;
 	}#END IF
-#*/
 
 
-	if (  !$htmlData = $cache->get($cacheId) )
-	{
-		// Получить все фильтры с опциями для модуля
-		$FilteringHelper = new ModCfFilteringHelper($params, $module);
-
-		$filters          = $FilteringHelper->getFilters();
-		$scriptVars = $FilteringHelper->getScriptVars();
-
-		$selected_filters = $FilteringHelper->getSelectedFilters();
-		$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
-		$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
-
-		ob_start();
-
-		require($LayoutPath);
-		// выполняем действия и сохраняем результат в $somevariable
-		$htmlData = ob_get_contents();
-		ob_end_clean();
-		if ( $params->get( 'cache_on' , 1 ) )
-		{
-			// сохраняем html в кэше
-			$cache->store($htmlData, $cacheId);
-		}#END IF
-
-
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-			$profiler->mark('Create - cache - store ');
-			echo'<pre style="color:green">';print_r( 'Данные взяты из Cache' );echo'</pre>';
-		}
-	}
-	else{
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-			$profiler->mark('GetDataCache');
-			echo'<pre style="color:green">';print_r( 'HTML - модуля "mod_cf_filtering" - получены из Cache' );echo'</pre>';
-		}
-	}
-
-	echo $htmlData;
-	$profiler->mark('End module');
-
-}
-catch (\Error $e)
-{
-	// Executed only in PHP 5, will not be reached in PHP 7
-	echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
-	echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
-	die(__FILE__ .' '. __LINE__ );
 }
 catch ( Exception $e )
 {
@@ -205,12 +129,5 @@ catch ( Exception $e )
 	die(__FILE__ .' '. __LINE__ );
 }
 
-if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-{
-//	echo'<pre>';print_r( $params->get( 'cache_on' , 1 ) );echo'</pre>'.__FILE__.' '.__LINE__;
 
-	$pageCreationTime = $profiler->getBuffer();
-	echo'<pre>';print_r( $pageCreationTime );echo'</pre>'.__FILE__.' '.__LINE__;
-//	die(__FILE__ .' '. __LINE__ );
 
-}

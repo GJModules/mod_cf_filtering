@@ -69,15 +69,10 @@ if( $view != 'module' ){?>
 
         <?php
         $profiler = \JProfiler::getInstance('PRO_Application - module');
-        $profiler->mark('Start default.php');
+//        $profiler->mark('Start default.php');
 
 
-        if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-        {
-//	        echo'<pre>';print_r( $filters );echo'</pre>'.__FILE__.' '.__LINE__;
-//	        die(__FILE__ .' '. __LINE__ );
 
-        }
 
         /**
          * @var \CfFilter $filter
@@ -137,7 +132,7 @@ if( $view != 'module' ){?>
                     }
 
 
-                    $profiler->mark('Before $filter->getDisplay()');
+//                    $profiler->mark('Before $filter->getDisplay()');
 
 
 
@@ -157,21 +152,21 @@ if( $view != 'module' ){?>
                         <!-- Start layout <?= $layout ?> -->
                         <?php
 
-	                    $profiler->mark('Start require default_'.$layout .' - default.php');
+//	                    $profiler->mark('Start require default_'.$layout .' - default.php');
                         require ModuleHelper::getLayoutPath('mod_cf_filtering', 'default_'.$layout);
-	                    $profiler->mark('End require default_'.$layout .' - default.php' );
+//	                    $profiler->mark('End require default_'.$layout .' - default.php' );
                         ?>
                         <!-- End layout <?= $layout ?> -->
                         <?php
                     }
-                    $profiler->mark('After $filter->getDisplay()');
+//                    $profiler->mark('After $filter->getDisplay()');
                     ?>
                 </div>
             </div>
             <?php
         }
 
-        $profiler->mark('After foreach $filters-  default.php');
+//        $profiler->mark('After foreach $filters-  default.php');
 
         //reset all link -
         if($params->get('disp_reset_all', 1) &&  !empty($selected_filters['selected_flt'])){

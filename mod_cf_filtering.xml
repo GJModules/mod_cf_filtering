@@ -7,11 +7,8 @@
 	<copyright>Copyright(c)</copyright>
 	<license>GNU/GPL v.2</license>
 
-	<creationDate>07.01.23-21:12</creationDate>
-	<version>3.10.23</version>
-
-
-
+	<creationDate>16.01.23-12:37</creationDate>
+	<version>3.10.25</version>
 	<description><![CDATA[ <h3>Custom Filters - @Gartes</h3> ]]> </description>
 	<files>
 		<filename module="mod_cf_filtering">mod_cf_filtering.php</filename>
@@ -141,6 +138,18 @@
 					   type="filterlist"
 					   label="MOD_CF_FILTERING_FILTERLIST_LABEL"
 					   description="MOD_CF_FILTERING_FILTERLIST_DESC" />
+			</fieldset>
+			<!-- Вкладка - CACHE -->
+			<fieldset name="MOD_CF_FILTERING_CACHE">
+				<field
+						name="owncache"
+						type="list"
+						default="1"
+						label="COM_MODULES_FIELD_CACHING_LABEL"
+						description="COM_MODULES_FIELD_CACHING_DESC">
+					<option value="1">JGLOBAL_USE_GLOBAL</option>
+					<option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+				</field>
 			</fieldset>
 			<!-- Вкладка - Поиск по ключевым фразам -->
 			<fieldset name="MOD_CF_FILTERING_KEYWORD">

@@ -268,6 +268,7 @@ class UrlHandler
         $uri->setQuery($q_array);
 
 
+
         return $uri;
     }
 
