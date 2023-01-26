@@ -1,10 +1,10 @@
 <updates>
     <update>
-        <name><![CDATA[Mod cf Filtering by Gartes]]></name>
-        <description><![CDATA[Модуль вывода фильтров для VM]]></description>
+        <name>Module for displaying product filters by Gartes</name>
+        <description><![CDATA[Модуль для отображение фильтров товаров для компонента Custom Filters Seo]]></description>
         <type>module</type>
         <element>mod_cf_filtering</element>
-        <version>3.10.25</version>
+        <version>3.10.26</version>
         <client>site</client>
         <infourl title="Joomla!">https://www.joomla.org/announcements/release-news/5765-joomla-3-9-6-release.html
         </infourl>

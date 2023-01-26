@@ -1769,6 +1769,7 @@ class OptionsHelper
     // ___Price___//
 
     /**
+     * Получить ценовые диапазоны с учетом всех продуктов
      * Get the price ranges getting into account all the products
      *
      * @return mixed|object
@@ -1786,9 +1787,9 @@ class OptionsHelper
         // try using external cache - if exists
         $store_id = 'price_range_init::' . $shop_currency_id;
         $cache = Factory::getCache('mod_cf_filtering.ranges', 'output');
-        $lt = (int) $this->componentparams->get('cache_time', 180);
+        $liveTimeCache = (int) $this->componentparams->get('cache_time', 180);
         $cache->setCaching(1);
-        $cache->setLifeTime($lt);
+        $cache->setLifeTime($liveTimeCache);
         $ranges = $cache->get($store_id);
 
         if (empty($ranges)) {
@@ -2016,6 +2017,7 @@ class OptionsHelper
     }
 
     /**
+     * Создайте запрос для ценовых диапазонов
      * Build the query for the price ranges
      *
      * @param JDatabaseQuery The db query Object

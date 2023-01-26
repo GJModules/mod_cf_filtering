@@ -27,7 +27,7 @@ use Joomla\CMS\Language\Text;
 class ModCfFilteringHelper
 {
 	/**
-	 * @since version
+	 * @since 3.9
 	 * @var ModCfFilteringHelper
 	 */
 	protected static $instance;
