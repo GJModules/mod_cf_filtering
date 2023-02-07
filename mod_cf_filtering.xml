@@ -7,14 +7,14 @@
 	<copyright>Copyright(c)</copyright>
 	<license>GNU/GPL v.2</license>
 
-	<creationDate>31.01.23-00:41</creationDate>
-	<version>3.10.27</version>
+	<creationDate>07.02.23-06:30</creationDate>
+	<version>3.10.29</version>
 	<description><![CDATA[ <h3>Модуль для отображение фильтров товаров для компонента Custom Filters Seo - @Gartes</h3> ]]> </description>
 	<files>
 		<filename module="mod_cf_filtering">mod_cf_filtering.php</filename>
 		<folder>assets</folder>
-		<folder>tmpl</folder>
 		<folder>language</folder>
+		<folder>tmpl</folder>
 
 		<filename>bootstrap.php</filename>
 		<filename>CfFilter.php</filename>
