@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="module" version="3.5" client="site" method="upgrade">
-	<name>mod_cf_filtering</name>
+	<name>MOD_CF_FILTERING</name>
 
 	<author>Gartes</author>
 	<authorUrl></authorUrl>
-	<copyright>Copyright(c)</copyright>
+	<copyright>Copyright(c) 2012-2023</copyright>
 	<license>GNU/GPL v.2</license>
 
-	<creationDate>07.02.23-06:31</creationDate>
-	<version>3.10.29</version>
-	<description><![CDATA[ <h3>Модуль для отображение фильтров товаров для компонента Custom Filters Seo - @Gartes</h3> ]]> </description>
+	<creationDate>07.02.23-09:56</creationDate>
+	<version>3.10.30</version>
+	<description><![CDATA[<h3>Модуль для отображение фильтров товаров для компонента Custom Filters Seo - @Gartes</h3>]]></description>
 	<files>
 		<filename module="mod_cf_filtering">mod_cf_filtering.php</filename>
 		<folder>assets</folder>
