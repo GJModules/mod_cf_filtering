@@ -231,8 +231,9 @@ class ModCfFilteringHelper
 	{
 		// Получить все фильтры с опциями для модуля
 		$FilteringHelper = new ModCfFilteringHelper($params, $module);
-
 		$filters          = $FilteringHelper->getFilters();
+
+
 		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 		{
 //		    echo'<pre>';print_r( $filters );echo'</pre>'.__FILE__.' '.__LINE__;
@@ -1008,6 +1009,7 @@ class ModCfFilteringHelper
 		{
 
 			$Options = $filter->getOptions();
+
 
 
 			// Loop Option
