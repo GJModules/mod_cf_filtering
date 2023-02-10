@@ -1031,7 +1031,6 @@ class ModCfFilteringHelper
 				$optionsFilterArr[] = $option;
 			}#END FOREACH $Options
 
-
 			// Устанавливаем Опции фильтра
 			$filter->setOptions( $Options );
 
