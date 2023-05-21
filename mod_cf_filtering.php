@@ -7,7 +7,11 @@
  */
 
 use Joomla\CMS\Cache\Cache;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Helper\ModuleHelper;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 
 defined('_JEXEC') or die(); // no direct access
 if (!defined('DEV_IP'))  define('DEV_IP',     '***.***.***.***');
@@ -21,9 +25,10 @@ JLoader::registerNamespace( 'GNZ11' , JPATH_LIBRARIES . '/GNZ11' , $reset = fals
 JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
 JLoader::register('seoTools_uri' , JPATH_ROOT .'/components/com_customfilters/include/seoTools_uri.php');
 
-$paramsComponent = JComponentHelper::getParams('com_customfilters');
 
+$paramsComponent = ComponentHelper::getParams('com_customfilters');
 $debug_on = $paramsComponent->get('debug_on' , 0 ) ;
+
 if (!defined('CF_FLT_DEBUG')) {
 	define('CF_FLT_DEBUG',     $debug_on );
 	if ( CF_FLT_DEBUG )
@@ -43,6 +48,7 @@ JFactory::getDocument()->addStyleDeclaration('
 
 
 
+
 /**
  * @var Joomla\Registry\Registry $params
  * @var stdClass                 $module
@@ -58,9 +64,9 @@ if ( $_SERVER['REMOTE_ADDR'] ==  DEV_IP ) $profiler->mark('Start module mod_cf_f
 
 
 
-JText::script('MOD_CF_FILTERING_INVALID_CHARACTER');
-JText::script('MOD_CF_FILTERING_PRICE_MIN_PRICE_CANNOT_EXCEED_MAX_PRICE');
-JText::script('MOD_CF_FILTERING_MIN_CHARACTERS_LIMIT');
+Text::script('MOD_CF_FILTERING_INVALID_CHARACTER');
+Text::script('MOD_CF_FILTERING_PRICE_MIN_PRICE_CANNOT_EXCEED_MAX_PRICE');
+Text::script('MOD_CF_FILTERING_MIN_CHARACTERS_LIMIT');
 
 \VmConfig::loadConfig();
 $jlang = \JFactory::getLanguage();
@@ -76,13 +82,16 @@ $doc->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css' . '
 
 
 $cacheId = ModCfFilteringHelper::getCacheId($params, $module);
-$cache = JFactory::getCache('mod_cf_filtering', '');
+$cache = Factory::getCache('mod_cf_filtering', '');
+
+
+
 
 try
 {
 
-	$app = \Joomla\CMS\Factory::getApplication();
-	$juri = \Joomla\CMS\Uri\Uri::getInstance();
+	$app = Factory::getApplication();
+	$juri = Uri::getInstance();
 	$filterUrl = $juri->getPath();
 	$view = $app->input->get('view' , false , 'STRING ') ;
 	$app->input->set('filter-url' , md5( $filterUrl ) );
@@ -94,6 +103,9 @@ try
 	$cacheparams->methodparams = [ $module , $params ];
 
 
+
+
+
 	$cacheparams->modeparams = [
 		'Itemid' => 'INT',
 		'module_id' => 'INT',
@@ -102,24 +114,22 @@ try
 		'filter-url' => 'STRING',
 	];
 
+
 	// Отключить Cache - для Developer
 	if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
 	{
 		$params->set('owncache' , 0 );
+		//	    echo'<pre>';print_r( $view );echo'</pre>'.__FILE__.' '.__LINE__;
+		//	    die(__FILE__ .' '. __LINE__ );
 	}
 
-	if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-	{
-//	    echo'<pre>';print_r( $view );echo'</pre>'.__FILE__.' '.__LINE__;
-//	    die(__FILE__ .' '. __LINE__ );
-
-	}
 	if ( $view != 'productdetails' )
 	{
-		$htmlData = \Joomla\CMS\Helper\ModuleHelper::moduleCache($module, $params, $cacheparams);
+
+
+		$htmlData = ModuleHelper::moduleCache($module, $params, $cacheparams);
 		echo $htmlData ;
 	}#END IF
-
 
 }
 catch ( Exception $e )

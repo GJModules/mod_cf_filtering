@@ -9,6 +9,7 @@
 // no direct access
 defined( '_JEXEC' ) or die();
 
+use Joomla\CMS\Profiler\Profiler;
 use Joomla\Registry\Registry;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
@@ -168,7 +169,7 @@ class ModCfFilteringHelper
 	 */
 	protected $menu_params;
 	/**
-	 * @var \Joomla\CMS\Profiler\Profiler
+	 * @var Profiler
 	 */
 	protected $profiler;
 	/**
@@ -188,11 +189,16 @@ class ModCfFilteringHelper
 	public function __construct( Registry $params , stdClass $module )
 	{
 
+		$doc                    = Factory::getApplication()->getDocument();
+
 		$this->moduleparams     = $params;
 		$this->module           = $module;
-		$this->component_params = \cftools::getComponentparams();
-		$this->menu_params      = \cftools::getMenuparams();
-		$doc                    = Factory::getDocument();
+		$this->component_params = cftools::getComponentparams();
+
+
+        $this->menu_params      = cftools::getMenuparams();
+
+
 		$Itemid                 = $this->menu_params->get( 'cf_itemid' , '' );
 		$this->results_trigger  = $params->get( 'results_trigger' , 'sel' );
 
@@ -213,7 +219,7 @@ class ModCfFilteringHelper
 
 		if ( $profilerParam )
 		{
-			$this->profiler = \JProfiler::getInstance( 'application' );
+			$this->profiler = Profiler::getInstance( 'application' );
 		}
 	}
 
@@ -229,35 +235,22 @@ class ModCfFilteringHelper
 	 */
 	public static function getHtmlFilterCache( stdClass $module , Registry $params )
 	{
+
+
 		// Получить все фильтры с опциями для модуля
 		$FilteringHelper = new ModCfFilteringHelper($params, $module);
-		$filters          = $FilteringHelper->getFilters();
+        $filters          = $FilteringHelper->getFilters();
 
-
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-//		    echo'<pre>';print_r( $filters );echo'</pre>'.__FILE__.' '.__LINE__;
-//		    die(__FILE__ .' '. __LINE__ );
-
-		}
 		$scriptVars = $FilteringHelper->getScriptVars();
 
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-//		    echo'<pre>';print_r( $filters );echo'</pre>'.__FILE__.' '.__LINE__;
-//		    die(__FILE__ .' '. __LINE__ );
 
-		}
+
+
 
 		$selected_filters = $FilteringHelper->getSelectedFilters();
-		$moduleclass_sfx  = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+		$moduleclass_sfx  = htmlspecialchars( $params->get('moduleclass_sfx' ,   $module->module.'_'.$module->id ), ENT_COMPAT, 'UTF-8');
 		$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-// 		    echo'<pre>';print_r( $LayoutPath );echo'</pre>'.__FILE__.' '.__LINE__;
-//			 die(__FILE__ .' '. __LINE__ );
 
- 		}
 		ob_start();
 
 		require($LayoutPath);
@@ -300,7 +293,7 @@ class ModCfFilteringHelper
 	 */
 	public function getFilters():array
 	{
-
+ 
 		/**
 		 * @var string $dependency_dir Зависимость направления
 		 */
@@ -329,29 +322,21 @@ class ModCfFilteringHelper
 		}
 
 		$this->scriptVars[ 'loadModule' ] = $loadAjaxModule;
-
+ 
 		/**
 		 * Массив опций выбранных опций фильтров
 		 * ---
 		 * @var array $selected_flt the selected filters' options array;
 		 */
-		$selected_flt = \CfInput::getInputs();
+		$selected_flt = CfInput::getInputs();
 
-
-
-		
 		/**
 		 * Выбранные фильтры после кодирования вывода - строки кодируются в BIN
 		 */
-		$this->selected_flt = \CfOutput::getOutput( $selected_flt , true );
+		$this->selected_flt = CfOutput::getOutput( $selected_flt , true );
 
 
-		if ($_SERVER['REMOTE_ADDR'] ==  DEV_IP )
-		{
-//			echo'<pre>';print_r( $selected_flt );echo'</pre>'.__FILE__.' '.__LINE__;
-//			die(__FILE__ .' '. __LINE__ );
 
-		}
 
 		/**
 		 * Содержит выборки, которые должны использоваться для каждого фильтра, когда зависимость идет сверху вниз
@@ -361,7 +346,7 @@ class ModCfFilteringHelper
 		 */
 		if ( count( $this->selected_flt ) > 0 && $dependency_dir == 't-b' )
 		{
-			$this->selected_fl_per_flt = \CfOutput::getOutput( CfInput::getInputsPerFilter( $this->module ) , true , true );
+			$this->selected_fl_per_flt = CfOutput::getOutput( CfInput::getInputsPerFilter( $this->module ) , true , true );
 		}
 
 
@@ -371,10 +356,12 @@ class ModCfFilteringHelper
 		 */
 		$this->reset = Factory::getApplication()->input->get( 'reset' , 0 , 'int' );
 
+
 		/**
 		 * @var \DisplayManager $displayManager
 		 */
 		$displayManager = new \DisplayManager( $this->moduleparams , $this->selected_flt );
+
 
 
 		/**
@@ -390,6 +377,7 @@ class ModCfFilteringHelper
 		{
 			$filters_order = array( 'q' , 'virtuemart_category_id' , 'virtuemart_manufacturer_id' , 'price' , 'stock' , 'custom_f' );
 		}
+
 
 		/**
 		 * Перебираем типы фильтров в соответствии с параметрами настроек модуля - (Порядок отображения фильтров)
@@ -797,6 +785,8 @@ class ModCfFilteringHelper
 						$custom_flt = cftools::getCustomFilters( $this->moduleparams );
 
 
+
+
 						$cf_range_size      = 6;
 						$cf_range_maxlength = 5;
 
@@ -815,12 +805,7 @@ class ModCfFilteringHelper
 								continue;
 							}
 
-							if ( $_SERVER[ 'REMOTE_ADDR' ] == DEV_IP )
-							{
 
-//		                        echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-
-							}
 
 							$var_name = "custom_f_$cf->custom_id";
 							$key      = $var_name;
@@ -858,18 +843,15 @@ class ModCfFilteringHelper
 								 */
 								$filter = $this->getFilter( $var_name , Text::_( $cf->custom_title ) , true );
 
-								if ( $_SERVER[ 'REMOTE_ADDR' ] == DEV_IP )
-								{
-//		                            echo'<pre>';print_r( $filter );echo'</pre>'.__FILE__.' '.__LINE__;
-//		                            die(__FILE__ .' '. __LINE__ );
 
-								}
 
 								if ( !isset( $filter ) ) continue;
 
 
 								// Set the description
 								$filter->setDescription( isset( $cf->tooltip ) ? $cf->tooltip : '' );
+
+
 
 
 								// Display smart search in displays other than "color_btn"
@@ -919,6 +901,8 @@ class ModCfFilteringHelper
 							}
 
 
+
+
 							// Set the filter, only if it has values
 							if ( !empty( $filter->getOptions() ) )
 							{
@@ -945,7 +929,7 @@ class ModCfFilteringHelper
 		} // foreach
 
 		// profiler print metrics
-		if ( $profilerParam ) \cftools::printProfiler( $this->profiler );
+		if ( $profilerParam ) cftools::printProfiler( $this->profiler );
 
 
 
@@ -992,6 +976,8 @@ class ModCfFilteringHelper
 			}
 		}
 
+
+
 		/**
 		 * -----------------------------------------------------------------
 		 */
@@ -1001,35 +987,48 @@ class ModCfFilteringHelper
 		 */
 		$selected_filters = $this->getSelectedFilters();
 		$this->urlHandler = new UrlHandler( $this->module , $selected_filters );
+
 		$seoTools         = new seoTools();
 
+
 		$optionsFilterArr = [];
-		// Loop Filters
+		// Перебираем фильтры для текущей страницы
 		foreach ( $this->filters as $key => &$filter )
 		{
 
 			$Options = $filter->getOptions();
 
-
-
 			// Loop Option
 			foreach ( $Options as &$option )
 			{
 				// создаем URL /filtr/metallocherepitsa/?custom_f_22[0]......
-				$option->option_url = \JRoute::_( $this->urlHandler->getURL( $filter , $option->id , $option->type ) );
+				$option->option_url = Route::_( $this->urlHandler->getURL( $filter , $option->id , $option->type ) );
+				
+//				echo'<pre>';print_r( $option );echo'</pre>'.__FILE__.' '.__LINE__;
 
+				
+				$option->option_sef_url = new stdClass();
+				$option->option_sef_url->sef_url = '' ;
 
 				// Добавить obj. SEF Link
 				$option->option_sef_url = $seoTools->createSefUrl( $filter , $option );
+
+//				echo'<pre>';print_r( $option );echo'</pre>'.__FILE__.' '.__LINE__;
+				
+				 
 
 				$var_name = $filter->getVarName();
 				if ( $var_name == 'virtuemart_category_id' )
 				{
 					$option->option_sef_url->sef_url = $option->option_url;
+
 				}#END IF
 
 				$optionsFilterArr[] = $option;
 			}#END FOREACH $Options
+
+//			die(__FILE__ .' '. __LINE__ );
+
 
 			// Устанавливаем Опции фильтра
 			$filter->setOptions( $Options );

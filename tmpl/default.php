@@ -14,8 +14,17 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\HTML\HTMLHelper;
 
-HTMLHelper::_('behavior.framework');
-
+//HTMLHelper::_('behavior.framework');
+if (version_compare(substr(JVERSION, 0, 3), '4.0', 'ge'))
+{
+	HTMLHelper::_('behavior.keepalive');
+}
+elseif (version_compare(substr(JVERSION, 0, 3), '3.0', 'ge'))
+{
+	HTMLHelper::_('behavior.tooltip');
+	HTMLHelper::_('behavior.framework');
+	HTMLHelper::_('behavior.modal');
+}
 if(count($filters) == 0) {
     return false;
 }

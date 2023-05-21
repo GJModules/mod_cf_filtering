@@ -7,8 +7,8 @@
 	<copyright>Copyright(c) 2012-2023</copyright>
 	<license>GNU/GPL v.2</license>
 
-	<creationDate>08.02.23-00:55</creationDate>
-	<version>3.10.31</version>
+	<creationDate>21.05.23-13:23</creationDate>
+	<version>4.0.0</version>
 	<description><![CDATA[<h3>Модуль для отображение фильтров товаров для компонента Custom Filters Seo - @Gartes</h3>]]></description>
 	<files>
 		<filename module="mod_cf_filtering">mod_cf_filtering.php</filename>

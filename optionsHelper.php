@@ -163,6 +163,9 @@ class OptionsHelper
         $jinput = $app->input;
         $this->input = $jinput;
         $this->selected_flt = CfInput::getInputs();
+		
+
+		
         $this->shopperGroups = cftools::getUserShopperGroups();
         $this->vmVersion = VmConfig::getInstalledVersion();
         $option = $jinput->get('option', '', 'cmd');
@@ -325,6 +328,8 @@ class OptionsHelper
                 break;
         }
 
+
+
         return $query;
     }
 
@@ -448,6 +453,7 @@ class OptionsHelper
 
 
 
+
 	    // перебрать фильтры с выбранными опциями -- и присоединиться к соответствующим таблицам
 	    // iterate through the selected variables and join the relevant tables
         foreach ($selected_flt as $key => $ar_value) {
@@ -477,7 +483,10 @@ class OptionsHelper
 
 	            // get the filter id
                 preg_match('/[0-9]+/', $key, $mathces);
+				
 
+				
+				
 	            /**
                  * Не учитывать переменную, если:
                  * а) Не существует.
@@ -2097,14 +2106,14 @@ class OptionsHelper
      *  Создание запроса для Custom Fields При создании фильтра
      *  Build the query for the custom options
      *
-     * @param JDatabaseQuery $query
-     * @param \stdClass $customfilter
-     * @param bool $part
+     * @param JDatabaseQuery  $Query
+     * @param \stdClass       $customfilter
+     * @param bool            $part
      *
      * @return JDatabaseQuery
      * @since 1.5.0
      */
-    public function buildCustomFltQuery(JDatabaseQuery $query, $customfilter, $part = false):JDatabaseQuery
+    public function buildCustomFltQuery( JDatabaseQuery $Query, $customfilter, $part = false):JDatabaseQuery
     {
 
         PluginHelper::importPlugin('vmcustom');
@@ -2120,7 +2129,7 @@ class OptionsHelper
         // is plugin
         if ($field_type == 'E') {
             if (!isset($customfilter->pluginparams)) {
-                return $query;
+                return $Query;
             }
             $pluginparams = $customfilter->pluginparams;
             $customvalues_table = $pluginparams->customvalues_table;
@@ -2131,7 +2140,7 @@ class OptionsHelper
 
             // if the values and the product relationships are in the different tables
             if ($product_customvalues_table != $customvalues_table) {
-                $query->innerJoin($product_customvalues_table . ' AS cfp ON cf.' . $filter_by . '=cfp.' . $filter_by);
+                $Query->innerJoin($product_customvalues_table . ' AS cfp ON cf.' . $filter_by . '=cfp.' . $filter_by);
             }
         }
 		else {
@@ -2139,6 +2148,8 @@ class OptionsHelper
             $product_customvalues_table = '#__virtuemart_product_customfields';
             $filter_by = 'customfield_value';
         }
+
+
 
         /**
          * подсчет результатов только тогда, когда $displayCounterSetting активен и нет выбора
@@ -2154,47 +2165,49 @@ class OptionsHelper
 
             // if return child products
             if ($returned_products == 'child') {
-                $query->select("SUM(CASE WHEN p.product_parent_id>0 THEN 1 ELSE 0 END) AS counter");
+                $Query->select("SUM(CASE WHEN p.product_parent_id>0 THEN 1 ELSE 0 END) AS counter");
             }
 			// if return parent products
             else if ($returned_products == 'parent') {
                 if ($filtered_products == 'all') {
-                    $query->select("COUNT(DISTINCT (CASE WHEN `p`.`product_parent_id` =0 THEN `p`.`virtuemart_product_id` ELSE `p`.`product_parent_id` END )) AS counter");
+                    $Query->select("COUNT(DISTINCT (CASE WHEN `p`.`product_parent_id` =0 THEN `p`.`virtuemart_product_id` ELSE `p`.`product_parent_id` END )) AS counter");
                 } // return parents and generate filters from child
                 else if ($filtered_products == 'parent') {
-                    $query->select("SUM(CASE WHEN p.product_parent_id=0 THEN 1 ELSE 0 END) AS counter");
+                    $Query->select("SUM(CASE WHEN p.product_parent_id=0 THEN 1 ELSE 0 END) AS counter");
                 } // return parents and generate filters from child
                 else if ($filtered_products == 'child') {
-                    $query->select("COUNT(DISTINCT p.product_parent_id) AS counter");
+                    $Query->select("COUNT(DISTINCT p.product_parent_id) AS counter");
                 }
             } // if return all products
             else {
-                $query->select("COUNT(p.virtuemart_product_id) AS counter");
+                $Query->select("COUNT(p.virtuemart_product_id) AS counter");
             }
         } else {
             $selectType = "DISTINCT";
         }
 
+
+
         if ($displayCounterSetting || $part) {
 
             // join the products table to check for unpublished
-            $query->innerJoin("`#__virtuemart_products` AS p ON cfp.virtuemart_product_id = p.`virtuemart_product_id`");
-            $query->where(" p.published=1");
-            $query->group('cfp.' . $filter_by);
+            $Query->innerJoin("`#__virtuemart_products` AS p ON cfp.virtuemart_product_id = p.`virtuemart_product_id`");
+            $Query->where(" p.published=1");
+            $Query->group('cfp.' . $filter_by);
 
             // stock control
             if (!VmConfig::get('use_as_catalog', 0)) {
                 if (VmConfig::get('stockhandle', 'none') == 'disableit_children') {
-                    $query->where('(p.`product_in_stock` - p.`product_ordered` >0 OR children.`product_in_stock` - children.`product_ordered` >0)');
-                    $query->leftJoin('`#__virtuemart_products` AS children ON p.`virtuemart_product_id` = children.`product_parent_id`');
+                    $Query->where('(p.`product_in_stock` - p.`product_ordered` >0 OR children.`product_in_stock` - children.`product_ordered` >0)');
+                    $Query->leftJoin('`#__virtuemart_products` AS children ON p.`virtuemart_product_id` = children.`product_parent_id`');
                 } elseif (VmConfig::get('stockhandle', 'none') == 'disableit') {
-                    $query->where('(`p`.`product_in_stock` - `p`.`product_ordered` >0)');
+                    $Query->where('(`p`.`product_in_stock` - `p`.`product_ordered` >0)');
                 }
             }
 
             // use of shopper groups
             if (count($this->shopperGroups) > 0 && $this->componentparams->get('products_multiple_shoppers', 0)) {
-                $query->innerJoin("
+                $Query->innerJoin("
 	                (
 	                    SELECT cfp.virtuemart_product_id,s.`virtuemart_shoppergroup_id` 
 	                    FROM `#__virtuemart_product_shoppergroups` AS s
@@ -2210,6 +2223,8 @@ class OptionsHelper
             }
         }
 
+
+
         // if not plugin
         if ($field_type != 'E') {
 			// при логическом отображении Да или Нет в случае 0 и 1
@@ -2222,13 +2237,14 @@ class OptionsHelper
                 $name_string = "cfp.customfield_value AS name";
             }
 
-            $query->select("$selectType cfp.customfield_value AS id, $name_string");
-            $query->from('#__virtuemart_product_customfields AS cfp');
+            $Query->select("$selectType cfp.customfield_value AS id, $name_string");
+            $Query->from('#__virtuemart_product_customfields AS cfp');
             if (!$part) {
-                $query->where("cfp.virtuemart_custom_id =" . $id);
+                $Query->where("cfp.virtuemart_custom_id =" . $id);
             }
             $order = '`name` ASC';
 
+			
             // если это список, получить порядок списка, иначе в алфавитном порядке
 	        // if its a list get the list ordering, otherwise alphabetically
             if ($customfilter->is_list && !empty($customfilter->custom_value)) {
@@ -2252,26 +2268,25 @@ class OptionsHelper
 		// плагины должны выполнять эту функцию (крючок плагина)
         // plugins should exec that function (plugin hook)
         else {
-            $query->select("$selectType ".$db->quoteName("cf.{$filter_by}", "id"));
-            $query->select($db->quoteName($customvalue_value_field, 'name'));
+            $Query->select("$selectType ".$db->quoteName("cf.{$filter_by}", "id"));
+            $Query->select($db->quoteName($customvalue_value_field, 'name'));
             if(!empty($customvalue_value_description_field)) {
-                $query->select($db->quoteName($customvalue_value_description_field, 'description'));
+                $Query->select($db->quoteName($customvalue_value_description_field, 'description'));
             }
-            $query->from($customvalues_table . ' AS cf');
+            $Query->from($customvalues_table . ' AS cf');
             $pluginparams = $customfilter->pluginparams;
             if (!empty($pluginparams->value_parent_id_field) && !empty($pluginparams->custom_parent_id) && isset($this->selected_flt['custom_f_' . $pluginparams->custom_parent_id])) {
-                $query->where($db->quoteName("cf.{$pluginparams->value_parent_id_field}")." IN(" . implode(',', $this->selected_flt['custom_f_' . (int)$pluginparams->custom_parent_id]) . ")");
+                $Query->where($db->quoteName("cf.{$pluginparams->value_parent_id_field}")." IN(" . implode(',', $this->selected_flt['custom_f_' . (int)$pluginparams->custom_parent_id]) . ")");
             }
             if (!$part) {
-                $query->where("cf.virtuemart_custom_id={$id}");
+                $Query->where("cf.virtuemart_custom_id={$id}");
             }
             $order = $pluginparams->sort_by; // change that later
         }
-        $query->order("$order");
+        $Query->order("$order");
 
 
-
-        return $query;
+        return $Query;
     }
 
     /**
