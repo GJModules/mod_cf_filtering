@@ -68,14 +68,14 @@ if( $view != 'module' ){?>
           class="cf_form<?php echo htmlspecialchars($params->get('moduleclass_sfx'));?>" id="cf_form_<?php echo $module->id?>">
 
         <?php
-        $profiler = \JProfiler::getInstance('PRO_Application - module');
+        $profiler = JProfiler::getInstance('PRO_Application - module');
 //        $profiler->mark('Start default.php');
 
 
 
 
         /**
-         * @var \CfFilter $filter
+         * @var CfFilter $filter
          */
         foreach($filters as $key => $filter){
             $display_key = $key.'_'.$module->id;
