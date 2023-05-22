@@ -1,53 +1,4 @@
 
-window.general_cf = function (){
-
-    var self = this ;
-    var $ = jQuery ;
-    this.Init = function (){
-
-        this.addEvtListener();
-    }
-    /**
-     * Добавить слушателей событий
-     */
-    this.addEvtListener = function () {
-        document.addEventListener('click' , function (e){
-            if( typeof e.target.dataset.evtAction === 'undefined' ) return ;
-            switch ( e.target.dataset.evtAction ) {
-                // кнопки показать еще в фильтрах
-                case 'show_var':
-                    self.omClickShowVar ( e )
-                    break ;
-            }
-            // console.log( e.target.dataset.evtAction  );
-            // console.log( e.target  );
-        })
-
-
-        /*document.querySelectorAll('div.show_var').forEach(function (el, i , n){
-            el.addEventListener( 'click' , self.omClickShowVar )
-        });*/
-
-    }
-    /**
-     * Обработка кнопки показать еще в фильтрах.
-     * @param e
-     */
-    this.omClickShowVar = function (e){
-        var $el = $(e.target);
-        var $UL = $el.parent();
-        var $li_disp_n = $UL.find('li.disp_n');
-        $UL.addClass('open_ul');
-        $li_disp_n.each(function (i,el){
-            $(el).removeClass('disp_n').addClass('open_li')
-        });
-        $el.hide();
-    }
-}
-window.General_CF = new window.general_cf();
-window.General_CF.Init();
-
-
 window.onpopstate = function (e) {
     location.href = document.location;
 
@@ -57,109 +8,132 @@ window.onpopstate = function (e) {
 
 
 var customFilters = {
-    eventsAssigned: new Array,
+    eventsAssigned: [],
     uriLocationState: {
         page: "Results"
     },
     counterHist: 0,
     assignEvents: function (module_id) {
-        // noinspection EqualityComparisonWithCoercionJS,EqualityComparisonWithCoercionJS,EqualityComparisonWithCoercionJS
-        if (this.eventsAssigned[module_id] == false || this.eventsAssigned[module_id] == null) {
+        let moduleWrapper = document.getElementById("cf_wrapp_all_" + module_id);
 
-            if (customFiltersProp[module_id].results_trigger == "btn" || customFiltersProp[module_id].results_loading_mode == "ajax") {
-                // link click event
-                document.id("cf_wrapp_all_" + module_id).addEvent("click:relay(a)", function (event) {
-                    event.stop();
+        if (customFiltersProp[module_id].results_trigger == "btn" || customFiltersProp[module_id].results_loading_mode == "ajax") {
 
+            // link click event
+            let links = [].slice.call(moduleWrapper.querySelectorAll('a'));
+            links.forEach((link) => {
+                link.addEventListener("click", (event) => {
+                    event.preventDefault();
 
-
-                    if ( customFiltersProp[module_id].category_flt_parent_link == false ) {
-                        if (this.hasClass("cf_parentOpt")) return false
+                    // Do not use the parent nodes as links
+                    if (customFiltersProp[module_id].category_flt_parent_link == false) {
+                        if (link.classList.contains("cf_parentOpt")) {
+                            return false
+                        }
                     }
-                    var url = this.get("href");
-                    if (this.hasClass("cf_no_ajax")){
-                        window.location.href = url ;
-
-                        return ;
-                    }
-
-                    customFilters.listen(event, this, module_id, url);
+                    const url = link.getAttribute("href");
+                    customFilters.listen(event, link, module_id, url);
                 });
+            });
 
-                // link enter keydown event
-                document.id("cf_wrapp_all_" + module_id).addEvent("keydown:relay(a)", function (event) {
-                    if(event.key!='enter') {
+            // link enter keydown event
+            links.forEach((link) => {
+                link.addEventListener("keydown", (event) => {
+                    if (event.key != 'enter') {
                         return false;
                     }
-                    event.stop();
-                    if (customFiltersProp[module_id].category_flt_parent_link == false) {
-                        if (this.hasClass("cf_parentOpt")) return false
-                    }
-                    var url = this.get("href");
-                    customFilters.listen(event, this, module_id, url);
-                });
-                // input click event
-                document.id("cf_wrapp_all_" + module_id).addEvent("click:relay(input[type=checkbox],input[type=radio])", function (event) {
-                    var url='';
-                    var anchror = document.id(this.get("id")+"_a");
-                    if(anchror) url = anchror.get("href");
-                    customFilters.listen(event, this, module_id,url);
-                });
-
-                document.id("cf_wrapp_all_" + module_id).addEvent("change:relay(select[class=cf_flt])", function (event) {
-                    event.stop();
-                    var url=this.options[this.selectedIndex].getAttribute('data-url');
-                    customFilters.listen(event, this, module_id,url);
-                })
-            }
-
-            /*The module form submit btn*/
-            if (customFiltersProp[module_id].results_loading_mode == "ajax" && customFiltersProp[module_id].results_trigger == "btn") {
-                document.id("cf_wrapp_all_" + module_id).addEvent("click:relay(input[type=submit],button[type=submit])", function (event) {
                     event.preventDefault();
-                    customFilters.listen(event,this,module_id);
-                })
-            }
+                    if (customFiltersProp[module_id].category_flt_parent_link == false) {
+                        if (link.classList.contains("cf_parentOpt")) return false
+                    }
+                    const url = link.getAttribute("href");
+                    customFilters.listen(event, link, module_id, url);
+                });
+            });
 
-            /*
-             * The btn resides in various filters
-             * This does not work only with ajax but with http as well
-             */
-            document.id("cf_wrapp_all_" + module_id).addEvent("click:relay(button[class=cf_search_button btn])", function (event) {
-                event.stop();
-                var filter_base_url = "";
-                var from_subquery = "";
-                var to_subquery = "";
-                var s = "";
-                var id = this.getProperty("id");
-                var filter_key = id.substr(0, id.indexOf("_button"));
-                filter_base_url = document.id(filter_key + "_url").value;
-                var n = filter_base_url;
-                var f = filter_base_url.indexOf("?");
+            // Input click event
+            let checkboxes = [].slice.call(moduleWrapper.querySelectorAll('input[type=checkbox]'));
+            let radioButtons = [].slice.call(moduleWrapper.querySelectorAll('input[type=radio]'));
+            let checkboxesAndRadioButtons = checkboxes.concat(radioButtons);
+            checkboxesAndRadioButtons.forEach((input) => {
+                input.addEventListener("click", function (event) {
+                    let url = '';
+                    const anchor = document.getElementById(input.id + "_a");
+                    if (anchor) {
+                        url = anchor.getAttribute("href");
+                    }
+                    customFilters.listen(event, input, module_id, url);
+                });
+            });
 
-                var fromField=document.id(filter_key+'_0');
-                var toField=document.id(filter_key+'_1');
+            // Select drop down change
+            let selectDropDowns = [].slice.call(moduleWrapper.querySelectorAll('select[class=cf_flt]'));
+            selectDropDowns.forEach((selectDropDown) => {
+                selectDropDown.addEventListener("change", function (event) {
+                    event.preventDefault();
+                    const url = this.options[this.selectedIndex].getAttribute('data-url');
+                    customFilters.listen(event, selectDropDown, module_id, url);
+                });
+            });
+        }
+
+        /*The module form submit btn*/
+        if (customFiltersProp[module_id].results_loading_mode == "ajax" && customFiltersProp[module_id].results_trigger == "btn") {
+
+            let submitInput = [].slice.call(moduleWrapper.querySelectorAll('input[type=submit]'));
+            let submitButtons = submitInput.concat([].slice.call(moduleWrapper.querySelectorAll('button[type=submit]')));
+
+            // Select drop down change
+            submitButtons.forEach((submitButton) => {
+                submitButton.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    customFilters.listen(event, submitButton, module_id);
+                });
+            });
+        }
+
+        /*
+         * The search btn resides in various filters
+         * This does not work only with ajax but with http as well
+         */
+        let searchButtons = [].slice.call(moduleWrapper.querySelectorAll('button.cf_search_button'));
+        searchButtons.forEach((searchButton) => {
+            searchButton.addEventListener("click", function (event) {
+                event.preventDefault();
+                let from_subquery = "";
+                let to_subquery = "";
+                let subQuery = "";
+                let id = this.getAttribute("id");
+                let filter_key = id.substr(0, id.indexOf("_button"));
+                let filter_base_url = document.getElementById(filter_key + "_url").value;
+                let isQueryExists = filter_base_url.indexOf("?");
+                let delimiter = "?";
+                let from_value = '';
+                let to_value = '';
+                let from_name = '';
+                let to_name = '';
+                let url = '';
+
+                let fromField = document.getElementById(filter_key + '_0');
+                let toField = document.getElementById(filter_key + '_1');
 
                 //is range inputs
-                if(fromField && toField){
-                    var from_value=fromField.value;
-                    var to_value=toField.value;
+                if (fromField && toField) {
+                    from_value = fromField.value;
+                    to_value = toField.value;
 
-                    var from_name=fromField.name;
-                    var to_name=toField.name;
+                    from_name = fromField.name;
+                    to_name = toField.name;
                 }
                 //is simple input
                 else {
-                    var from_value=document.id(filter_key+'_0').value;
-                    from_name=document.id(filter_key+'_0').name;
+                    from_value = fromField.value;
+                    from_name = fromField.name;
                 }
 
-                if (f != -1) {
-                    var d = "&";
+                if (isQueryExists != -1) {
+                    delimiter = "&";
                 }
-                else {
-                    var d = "?";
-                }
+
                 if (from_value) {
                     from_subquery = from_name + "=" + from_value;
                 }
@@ -168,101 +142,118 @@ var customFilters = {
                 }
 
                 if (from_subquery && !to_subquery) {
-                    s += d + from_subquery;
+                    subQuery += delimiter + from_subquery;
+                } else if (!from_subquery && to_subquery) {
+                    subQuery += delimiter + to_subquery;
+                } else {
+                    subQuery += delimiter + from_subquery + "&" + to_subquery;
                 }
-                else if (!from_subquery && to_subquery) {
-                    s += d + to_subquery;
-                }
-                else {
-                    s += d + from_subquery + "&" + to_subquery;
-                }
-                if (s) {
-                    var url = filter_base_url + s;
+                if (subQuery) {
+                    url = filter_base_url + subQuery;
                 }
 
                 if (url) {
-                    if (customFiltersProp[module_id].results_loading_mode == "ajax" || customFiltersProp[module_id].results_trigger=="btn") {
-                        customFilters.listen(event, this, module_id, url);
-                    }
-                    else {
+                    if (customFiltersProp[module_id].results_loading_mode == "ajax" || customFiltersProp[module_id].results_trigger == "btn") {
+                        customFilters.listen(event, searchButton, module_id, url);
+                    } else {
                         window.top.location.href = url;
                     }
                 }
             });
-            this.eventsAssigned[module_id] = true
-        }
+        });
     },
 
-
     listen: function (event, element, module_id, url) {
-        if(!module_id) {
+        if (!module_id) {
             return;
         }
-        var formSubmitBtn=false;
-        var query_value='';
-        var modurl=url;
-        var filterName='';
+        let formSubmitBtn = false;
+        let query_value = '';
+        let moduleUrl = url;
+        let filterName = '';
 
         //if it is html element, check if it is the module's submit btn
-        if(element.nodeType) {
-            formSubmitBtn=element.hasClass('cf_apply_button');
+        if (element.nodeType) {
+            formSubmitBtn = element.classList.contains('cf_apply_button');
         }
 
         if (typeof element.getProperty != "undefined" && element.getProperty('id')) {
-            var filterName=this.getFilterName(element.getProperty('id'));
+            filterName = this.getFilterName(element.getProperty('id'));
         }
 
         //call some functions related with the query search
-        if(filterName=='q' || formSubmitBtn){
-            if(!this.validateInput(filterName, module_id)) {
+        if (filterName === 'q' || formSubmitBtn) {
+            if (!this.validateInput(filterName, module_id)) {
                 return false;
             }
         }
 
         //A.get the search query, B. reset the filters by setting a new modurl, if new and there is such setting in the component
-        if(typeof customFiltersProp[module_id].mod_type != "undefined" && customFiltersProp[module_id].mod_type=='filtering'){
-            var query_input=document.getElementById('q_'+module_id+'_0');
+        if (typeof customFiltersProp[module_id].mod_type != "undefined" && customFiltersProp[module_id].mod_type === 'filtering') {
+            let query_input = document.getElementById('q_' + module_id + '_0');
 
             // fix for issue: https://github.com/breakdesigns/mod_cf_filtering/issues/22
-            if(filterName=='virtuemart_category' && typeof customFiltersProp[module_id].category_flt_onchange_reset != "undefined" && customFiltersProp[module_id].category_flt_onchange_reset=='filters_keywords') {
-                query_input = '';
+            if ( filterName === 'virtuemart_category' && typeof customFiltersProp[module_id].category_flt_onchange_reset != "undefined" && customFiltersProp[module_id].category_flt_onchange_reset == 'filters_keywords') {
+                query_input = null;
             }
-            if(query_input){
-                query_value=this.getQueryValue(module_id);
-                if(typeof element.id!='undefined' && element.id=='q_'+module_id+'_clear')query_value='';
-                if(typeof customFilters.previousQueryValue=='undefined')customFilters.previousQueryValue=query_value;
+            if (query_input) {
+                let query_value = this.getQueryValue(module_id);
+                if (typeof element.id != 'undefined' && element.id == 'q_' + module_id + '_clear') {
+                    query_value = '';
+                }
+                if (typeof customFilters.previousQueryValue == 'undefined') {
+                    customFilters.previousQueryValue = query_value;
+                }
 
-                if(customFilters.keyword_search_clear_filters_on_new_search && query_value!=customFilters.previousQueryValue){
-                    modurl=customFiltersProp[module_id].base_url+'index.php?option=com_customfilters&view=module&Itemid='+customFiltersProp[module_id].Itemid;
-                    if(query_value){
+                if (customFilters.keyword_search_clear_filters_on_new_search && query_value != customFilters.previousQueryValue) {
+                    let moduleUrl = customFiltersProp[module_id].base_url + 'index.php?option=com_customfilters&view=module&Itemid=' + customFiltersProp[module_id].Itemid;
+                    if (query_value) {
                         //modurl
-                        if(modurl.indexOf('?')==-1) {
-                            modurl+='?';
+                        if (moduleUrl.indexOf('?') == -1) {
+                            moduleUrl += '?';
+                        } else {
+                            moduleUrl += '&';
                         }
-                        else {
-                            modurl+='&';
-                        }
-                        modurl+='q='+query_value;
+                        moduleUrl += 'q=' + query_value;
                     }
                 }
             }
         }
 
-        //Load the results. a)Only when ajax is enabled, b)the results trigger is not button (after every selection), c)The results trigger is btn and the current action regards the button press/submit
-        if (customFiltersProp[module_id].results_loading_mode == "ajax" && (customFiltersProp[module_id].results_trigger != "btn" || (customFiltersProp[module_id].results_trigger == "btn" &&  formSubmitBtn))) {
+        //Load the results.
+        // a) Only when ajax is enabled,
+        // b) the results trigger is not button (after every selection),
+        // c) The results trigger is btn and the current action regards the button press/submit
+        if (
+            customFiltersProp[module_id].results_loading_mode === "ajax"
+            &&
+            (
+                customFiltersProp[module_id].results_trigger !== "btn"
+                || (
+                    customFiltersProp[module_id].results_trigger === "btn" && formSubmitBtn
+                )
+            )
+        ) {
 
             //if we use a keyword search in the filtering mod update the search module as well
-            if(typeof customFiltersProp[module_id].mod_type != "undefined" && customFiltersProp[module_id].mod_type=='filtering'){
-                if(query_input){
+            if (
+                typeof customFiltersProp[module_id].mod_type != "undefined"
+                &&
+                customFiltersProp[module_id].mod_type === 'filtering'
+            ) {
+                let query_input = document.getElementById('q_' + module_id + '_0');
+
+                if (query_input) {
+                    let query_value = this.getQueryValue(module_id);
                     //reset other filters if a new search phrase. This process is triggered based on a component setting
-                    if(customFilters.keyword_search_clear_filters_on_new_search && query_value!=customFilters.previousQueryValue){
+                    if (customFilters.keyword_search_clear_filters_on_new_search && query_value != customFilters.previousQueryValue) {
                         //find the base url for the search
-                        var url=customFiltersProp[module_id].component_base_url;
-                        if(query_value){
+                        let url = customFiltersProp[module_id].component_base_url;
+                        if (query_value) {
                             //url
-                            if(url.indexOf('?')==-1)url+='?';
-                            else url+='&';
-                            url+='q='+query_value;
+                            if (url.indexOf('?') == -1) url += '?';
+                            else url += '&';
+                            url += 'q=' + query_value;
                         }
                     }
 
@@ -275,76 +266,33 @@ var customFilters = {
 
         //load the filtering module
         if (customFiltersProp[module_id].loadModule && !formSubmitBtn) {
-            /**
-             * TODO : Если нет отмеченных фильтров - перезагружаем страницу - Разобраться - без перезагрузки.
-             * -- ссылка на пункт меню для фильтра /administrator/index.php?option=com_menus&view=item&client_id=0&layout=edit&id=173
-             */
-
-
-            if ( testEmptyFilter() ){
-                window.location.href = modurl ;
-                return ;
-            }
-
-            /**
-             * Проверить что нет отмеченных фильтров
-             * @returns {boolean}
-             */
-            function testEmptyFilter(){
-                var $ = jQuery ;
-
-                // Проверяем selects - если есть выбранные - запрещаем перегружать страницу
-                var $selectFilters = $('select.cf_flt option:selected');
-                var isSelect = false ;
-                $selectFilters.each(function (i,a){
-                    if ( $(a).val().length ) isSelect = true ;
-                })
-                if (isSelect) return false ;
-
-                var checkBox = $('input.cf_flt[type="checkbox"]:checked')
-
-
-
-                console.log( 'general-uncompressed::testEmptyFilter' , $selectFilters ); 
-                  
-                
-                if ( typeof checkBox[0] === 'undefined' )  return true  ;
-
-                
-
-                return false ;
-
-                
-            }
-
-
-            this.loadModule(event, module_id, modurl);
+            this.loadModule(event, module_id, moduleUrl);
         }
 
         //update filtering modules from other modules. event.g.when the search mod is used
         if (customFiltersProp[module_id].loadOtherModules) {
-            query_value='';
-            var query_input= document.getElementById('q_'+module_id+'_0');
-            if(typeof(query_input)!='undefined'){
-                query_value=this.getQueryValue(module_id);
-                if(typeof customFilters.previousQueryValue=='undefined'){
-                    customFilters.previousQueryValue=query_value;
+            const query_input = document.getElementById('q_' + module_id + '_0');
+
+            if (typeof (query_input) != 'undefined') {
+                let query_value = this.getQueryValue(module_id);
+                if (typeof customFilters.previousQueryValue == 'undefined') {
+                    customFilters.previousQueryValue = query_value;
                 }
-                if(customFilters.keyword_search_clear_filters_on_new_search && query_value!=customFilters.previousQueryValue){
-                    modurl=customFiltersProp[module_id].base_url+'index.php?option=com_customfilters&view=module';
-                    if(typeof element.id!='undefined' && element.id=='q_'+module_id+'_clear')query_value='';
-                    if(query_value){
+                if (customFilters.keyword_search_clear_filters_on_new_search && query_value != customFilters.previousQueryValue) {
+                    moduleUrl = customFiltersProp[module_id].base_url + 'index.php?option=com_customfilters&view=module';
+                    if (typeof element.id != 'undefined' && element.id == 'q_' + module_id + '_clear') query_value = '';
+                    if (query_value) {
                         //modurl
-                        if(modurl.indexOf('?')==-1)modurl+='?';
-                        else modurl+='&';
-                        modurl+='q='+query_value;
+                        if (moduleUrl.indexOf('?') == -1) moduleUrl += '?';
+                        else moduleUrl += '&';
+                        moduleUrl += 'q=' + query_value;
                     }
                 }
 
-                var filteringModIds=this.getFilteringModules();
-                for(var i=0; i<filteringModIds.length; i++){
-                    this.updateFilteringModuleWithSearchQuery(filteringModIds[i],query_value);
-                    this.loadModule(event, filteringModIds[i], modurl);
+                const filteringModIds = this.getFilteringModules();
+                for (let i = 0; i < filteringModIds.length; i++) {
+                    this.updateFilteringModuleWithSearchQuery(filteringModIds[i], query_value);
+                    this.loadModule(event, filteringModIds[i], moduleUrl);
                 }
             }
         }
@@ -379,7 +327,6 @@ var customFilters = {
         return false;
     },
 
-
     getFilterName: function (name) {
         var filterName = name.match(/([a-z]+_){1,2}/i);
 
@@ -391,22 +338,24 @@ var customFilters = {
     },
 
     getFilteringModules: function () {
-        var filteringMods = $$('.cf_wrapp_all');
-        var ids = new Array();
-        for (var i = 0; i < filteringMods.length; i++) {
-            var id = filteringMods[i].id;
-            if (id) parseInt(ids.push(id.substring(13)));
+        const filteringMods = document.querySelectorAll('.cf_wrapp_all');
+        let ids = [];
+        for (let i = 0; i < filteringMods.length; i++) {
+            let id = filteringMods[i].id;
+            if (id) {
+                ids.push(id.substring(13));
+            }
         }
         return ids;
     },
 
     getBreadcrumbModules: function () {
-        var modules = $$('.cf_breadcrumbs_wrapper');
-        var ids = new Array();
-        for (var i = 0; i < modules.length; i++) {
-            var id = modules[i].getAttribute('data-moduleid');
+        const modules = document.querySelectorAll('.cf_breadcrumbs_wrapper');
+        let ids = [];
+        for (let i = 0; i < modules.length; i++) {
+            const id = modules[i].getAttribute('data-moduleid');
             if (id) {
-                parseInt(ids.push(id));
+                ids.push(id);
             }
         }
         return ids;
@@ -437,6 +386,15 @@ var customFilters = {
      * @param {String} url
      */
     loadModule: function (event, module_id, url) {
+        let optionsStorage = Joomla.getOptions('mod_cf_filtering');
+        if (optionsStorage.category_url === url ){
+           /* url = '/index.php?option=com_ajax&module=cf_filtering&id=' + module_id
+                + '&method=loadResetModule'
+                + '&virtuemart_category_id=' + optionsStorage.category_id
+                // + '&format=json'*/
+            window.location.href = optionsStorage.category_url ;
+            return ;
+        }
         this.httpRequest(module_id, event, type = 'module', url);
 
     },
@@ -460,7 +418,7 @@ var customFilters = {
      * @param {String} url
      * @returns {boolean}
      */
-    httpRequest: function (module_id, event, type, url) {
+    httpRequest: function (module_id, event, type, url, clearAreaOnLoad = true) {
 
         // Results wrapper selector
         let moduleResultsWrapperSelector = "#cf_wrapp_all_" + module_id;
@@ -470,21 +428,23 @@ var customFilters = {
         let baseURL;
 
         // Use loading icon
-        let useAjaxOverlay = false;
+        let useAjaxOverlay = clearAreaOnLoad;
         if (typeof customFiltersProp[module_id] != "undefined") {
             if (typeof customFiltersProp[module_id].results_wrapper != "undefined") {
                 componentResultsWrapperSelector = '#' + customFiltersProp[module_id].results_wrapper;
             }
 
-            useAjaxOverlay = type == 'module' ? customFiltersProp[module_id].use_ajax_spinner : customFiltersProp[module_id].use_results_ajax_spinner;
+            if(clearAreaOnLoad) {
+                useAjaxOverlay = type === 'module' ? customFiltersProp[module_id].use_ajax_spinner : customFiltersProp[module_id].use_results_ajax_spinner;
+            }
             baseURL = customFiltersProp[module_id].base_url;
         }
-        let targetWrapperSelector = type == 'module' ? moduleResultsWrapperSelector : componentResultsWrapperSelector;
+        let targetWrapperSelector = type === 'module' ? moduleResultsWrapperSelector : componentResultsWrapperSelector;
 
         // Ajax overlay wrapper selector
         let moduleAjaxOverlaySelector = "#cf_ajax_loader_" + module_id;
         let componentAjaxOverlaySelector = "#cf_res_ajax_loader";
-        let ajaxOverlaySelector = type == 'module' ? moduleAjaxOverlaySelector : componentAjaxOverlaySelector;
+        let ajaxOverlaySelector = type === 'module' ? moduleAjaxOverlaySelector : componentAjaxOverlaySelector;
 
         // form
         let form = document.querySelector("#cf_form_" + module_id);
@@ -508,6 +468,7 @@ var customFilters = {
             if (type == 'module') {
                 urlObject.searchParams.set("view", "module");
                 urlObject.searchParams.set("format", "raw");
+                urlObject.searchParams.set("async", "1");
                 urlObject.searchParams.set("module_id", module_id);
             }
             urlObject.searchParams.set("tmpl", "component");
@@ -517,12 +478,12 @@ var customFilters = {
             request.onloadstart = function () {
 
                 // go to the top if we are down the page
-                if (type == 'component' && window.scrollY - targetWrapper.getTop() > 720) {
+                if (type === 'component' && window.scrollY - targetWrapper.offsetTop > 720) {
                     targetWrapper.scrollIntoView(({behavior: 'smooth'}));
                 }
 
-                if (useAjaxOverlay == true && ajaxOverlayWrapper != null) {
-                    customFilters.formatModuleAjaxOverlay(ajaxOverlayWrapper, targetWrapper, event, type);
+                if (useAjaxOverlay === true && ajaxOverlayWrapper != null) {
+                    customFilters.formatAjaxOverlay(ajaxOverlayWrapper, targetWrapper, event, type);
                 }
             };
             try {
@@ -536,15 +497,16 @@ var customFilters = {
             let formData = new FormData(form);
 
             // Set the query params needed for the module
-            if (type == 'module') {
+            if (type === 'module') {
                 formData.append('view', 'module');
                 formData.append('format', 'raw');
+                formData.append('async', 1);
                 formData.append('module_id', module_id);
             }
             else {
                 // We need the url of the results to update the window state (i.e. address bar)
                 baseURL = form.getAttribute('action');
-                if(baseURL.indexOf('?')==-1){
+                if(baseURL.indexOf('?')=== -1 ){
                     baseURL+='?';
                 }
                 else {
@@ -564,12 +526,12 @@ var customFilters = {
             request.onloadstart = function () {
 
                 // go to the top if we are down the page
-                if (type == 'component' && window.scrollY - targetWrapper.getTop() > 720) {
+                if (type === 'component' && window.scrollY - targetWrapper.getBoundingClientRect().y > 720) {
                     targetWrapper.scrollIntoView(({behavior: 'smooth'}));
                 }
 
-                if (useAjaxOverlay == true && ajaxOverlayWrapper != null) {
-                    customFilters.formatModuleAjaxOverlay(ajaxOverlayWrapper, targetWrapper, event, type);
+                if (useAjaxOverlay === true && ajaxOverlayWrapper != null) {
+                    customFilters.formatAjaxOverlay(ajaxOverlayWrapper, targetWrapper, event, type);
                 }
             };
             try {
@@ -583,7 +545,7 @@ var customFilters = {
         // The request returns an error
         request.onerror = function () {
             if (ajaxOverlayWrapper != null) {
-                ajaxOverlayWrapper.setStyle("display", "none");
+                ajaxOverlayWrapper.style.display = "none";
             }
             console.error('The http request cannot be completed due to error:' + request.status + ' ' + request.statusText);
             return false;
@@ -592,15 +554,18 @@ var customFilters = {
         // The request completed :)
         request.onload = function () {
             if (ajaxOverlayWrapper != null) {
-                ajaxOverlayWrapper.setStyle("display", "none");
+                ajaxOverlayWrapper.style.display = "none";
             }
-            let response = new Object();
+            let response = {};
             response.text = request.responseText.removeScripts(function (script) {
                 response.script = script;
             });
 
+            if(type === 'module') {
+                response.text = request.responseText.applyCss();
+            }
+
             // We need to get only the inner part of the results
-            // Нам нужно получить только внутреннюю часть результатов
             if (type === 'component') {
 
                 // Get the title from the results
@@ -610,34 +575,19 @@ var customFilters = {
                     document.title = title[1];
                 }
 
-                let keywords = response.text.match(/<meta name="keywords" content="([\s\S]*?)" \/>/i);
-                if (keywords) {
-                    // set a new keywords
-                    var metaKeywords = document.querySelector('meta[name="keywords"]');
-                    if (metaKeywords){
-                        metaKeywords.setAttribute("content", keywords[1]);
-                    }
-
-                }
-
-                let description = response.text.match(/<meta name="description" content="([\s\S]*?)" \/>/i);
-                if ( description ) {
-                    // set a new description
-                    document.querySelector('meta[name="description"]').setAttribute("content", keywords[1]);
-                }
-
-
-
                 // Get the body from the results
-                var match = response.text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+                const match = response.text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
 
                 if (match) {
                     response.text = match[1];
                 } else {
                     console.error('The results response does not contain body element');
                 }
-                let temp = new Element('div').set('html', response.text);
+                // Dummy element for injecting the response
+                const temp = document.createElement('div');
+                temp.innerHTML = response.text;
                 let resultsElement = temp.querySelector(componentResultsWrapperSelector);
+                temp.remove();
                 if (resultsElement) {
                     response.text = resultsElement.innerHTML;
                 } else {
@@ -661,18 +611,42 @@ var customFilters = {
                 }
             }
 
-            if (type == 'component') {
+            if (type === 'component') {
                 customFilters.triggerResultsScripts();
+                /*
+                Dispatch an event after the results update, that can be used by other apps.
+                Scripts relevant to the results can be triggered using that event.
+                */
+                document.dispatchEvent(new CustomEvent('CfResultsUpdate', {
+                    bubbles: true,
+                    cancelable: true,
+                    detail: {url: url}
+                }));
+
                 if (url) {
                     customFilters.setWindowState(url);
                 }
                 try {
-                    // Обновление модуля на странице
                     customFilters.updateDependentModules(module_id);
                 } catch (e) {
                     console.error(e);
                 }
 
+            }
+            else if(type === 'module') {
+                if(typeof customFiltersModuleInit === 'function') {
+                    // Initialize the filtering module
+                    customFiltersModuleInit(module_id);
+                }
+                /*
+                Dispatch an event after the module update, that can be used by other apps.
+                Scripts relevant to the modules can be triggered using that event.
+                */
+                document.dispatchEvent(new CustomEvent('CfModuleUpdate', {
+                    bubbles: true,
+                    cancelable: true,
+                    detail: {module_id: module_id, url: url}
+                }));
             }
         };
         return true;
@@ -845,61 +819,129 @@ var customFilters = {
         }
     },
 
-    addEventsRangeInputs: function (e, t) {
-        var n = e + "_" + t;
-        var r = document.id(n + "_0");
-        var i = document.id(n + "_1");
-        if (r && i) {
-            customFilters.validateRangeFlt(t, e);
-            var s = document.id(n + "_slider");
-            r.addEvent("keyup", function (n) {
-                var r = customFilters.validateRangeFlt(t, e);
-                if (s != null) customFilters.setSliderValues(t, e, r, "min")
+    addEventsRangeInputs: function (filterKey, module_id) {
+        const elementBaseId = filterKey + "_" + module_id;
+        const fromElement = document.getElementById(elementBaseId + "_0");
+        const toElement = document.getElementById(elementBaseId + "_1");
+        if (fromElement && toElement) {
+            customFilters.validateRangeFlt(module_id, filterKey);
+            const slider = document.getElementById(elementBaseId + "_slider");
+            fromElement.addEventListener("keyup", function (n) {
+                const validRange = customFilters.validateRangeFlt(module_id, filterKey);
+                if (slider != null) {
+                    customFilters.setSliderValues(module_id, filterKey, validRange, "min")
+                }
             });
-            i.addEvent("keyup", function (n) {
-                var r = customFilters.validateRangeFlt(t, e);
-                if (s != null)customFilters.setSliderValues(t, e, r, "max")
+            toElement.addEventListener("keyup", function (n) {
+                const validRange = customFilters.validateRangeFlt(module_id, filterKey);
+                if (slider != null) {
+                    customFilters.setSliderValues(module_id, filterKey, validRange, "max")
+                }
             });
-            if (customFiltersProp[t].results_trigger == "btn") {
-                r.addEvent("change", function (n) {
-                    var i = customFilters.validateRangeFlt(t, e);
-                    if (i) customFilters.listen(r, t)
+            if (customFiltersProp[module_id].results_trigger === "btn") {
+                fromElement.addEventListener("change", function (n) {
+                    const validRange = customFilters.validateRangeFlt(module_id, filterKey);
+                    if (validRange) {
+                        customFilters.listen(fromElement, module_id)
+                    }
                 });
-                i.addEvent("change", function (n) {
-                    var r = customFilters.validateRangeFlt(t, e);
-                    if (r) customFilters.listen(i, t)
+                toElement.addEventListener("change", function (n) {
+                    const validRange = customFilters.validateRangeFlt(module_id, filterKey);
+                    if (validRange) {
+                        customFilters.listen(toElement, module_id)
+                    }
                 })
             }
         }
     },
 
     createToggle: function (displayKey, state) {
-        var element = jQuery('#cf_wrapper_inner_'+ displayKey);
-        var cookieState = Cookie.read(displayKey) ? Cookie.read(displayKey) : state;
-        var display = cookieState == 'show' ? true : false;
-        element.toggle(display);
-        customFilters.setHeaderClass(displayKey, cookieState);
-        customFilters.setAriaExpanded(displayKey, cookieState);
+        // Check if sessionStorage is supported
+        const test = 'testKey';
+        try {
+            sessionStorage.setItem(test, test);
+            sessionStorage.removeItem(test);
+        } catch (e) {
+            return false;
+        }
+        const element = document.getElementById('cf_wrapper_inner_'+ displayKey);
+        const sessionState = sessionStorage.getItem(displayKey) ? sessionStorage.getItem(displayKey) : state;
+        customFilters.setHeaderClass(displayKey, sessionState);
+        customFilters.setAriaExpanded(displayKey, sessionState);
+        customFilters.setAriaHidden(displayKey, sessionState);
+        const headElement = document.querySelector("#cfhead_" + displayKey);
 
-        document.querySelector("#cfhead_" + displayKey).addEventListener('click', function (state) {
-            element.toggle();
-            if (element.is(':visible')) var mystate = "show";
-            else var mystate = "hide";
-            customFilters.setHeaderClass(displayKey, mystate);
-            customFilters.setAriaExpanded(displayKey, mystate);
-            var s = Cookie.write(displayKey, mystate);
+        if(headElement) {
+            headElement.addEventListener('click', function () {
+                const detectedHiddenState = element.getAttribute('aria-hidden');
+                const newState = detectedHiddenState == 'true' ? 'show' : 'hide';
+                customFilters.setHeaderClass(displayKey, newState);
+                customFilters.setAriaExpanded(displayKey, newState);
+                customFilters.setAriaHidden(displayKey, newState);
+                sessionStorage.setItem(displayKey, newState);
+            });
+        }
+    },
+
+    showMoreToggle: function(module_id) {
+        let showMoreButtons = [];
+        if (module_id) {
+            const moduleWrapper = document.getElementById('cf_form_' + module_id);
+            if (moduleWrapper) {
+                showMoreButtons = moduleWrapper.querySelectorAll('.cf_show_more');
+            }
+        } else {
+            showMoreButtons = document.querySelectorAll('.cf_show_more');
+        }
+
+        showMoreButtons.forEach((showMoreButton) => {
+            const wrapper = showMoreButton.closest('.cf_wrapper_inner');
+            const filterKey = wrapper.id;
+            let toggleableElements = document.getElementById(wrapper.id).querySelectorAll('.cf_toggleable');
+
+            showMoreButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                const shownElements = toggleableElements[0].classList.contains('cf_invisible') ? false : true;
+
+                toggleableElements.forEach((element) => {
+                    if(shownElements === false) {
+                        element.classList.remove('cf_invisible');
+                    }else {
+                        element.classList.add('cf_invisible');
+
+                        // Closed open trees when collapsing
+                        if(element.classList.contains('cf_parentLi')) {
+                            const anchorElement = element.querySelector('a');
+                            customFilters.setSubTreeState(anchorElement, 'collapsed');
+                        }
+                    }
+                })
+
+                // Alter the button's label and class
+                if(shownElements === false) {
+                    showMoreButton.innerHTML = Joomla.JText._('MOD_CF_SHOW_LESS');
+                    showMoreButton.classList.remove('cf_show_more--collapsed');
+                    showMoreButton.classList.add('cf_show_more--expanded');
+                }else {
+                    showMoreButton.innerHTML = Joomla.JText._('MOD_CF_SHOW_MORE');
+                    showMoreButton.classList.add('cf_show_more--collapsed');
+                    showMoreButton.classList.remove('cf_show_more--expanded');
+                }
+            })
         });
     },
 
     setHeaderClass: function (displayKey, state) {
         let elementId = "headexpand_" + displayKey;
         let element = document.getElementById(elementId);
-        if (state == "hide") {
-            element.removeClass("headexpand_show");
-            element.addClass("headexpand_hide")
-        } else {
-            element.removeClass("headexpand_hide");
-            element.addClass("headexpand_show")
+        if(element) {
+            if (state == "hide") {
+                element.classList.remove("headexpand_show");
+                element.classList.add("headexpand_hide")
+            } else {
+                element.classList.remove("headexpand_hide");
+                element.classList.add("headexpand_show")
+            }
         }
     },
 
@@ -910,6 +952,17 @@ var customFilters = {
             element.setAttribute("aria-expanded", "false");
         } else {
             element.setAttribute("aria-expanded", "true");
+        }
+    },
+
+    setAriaHidden: function (displayKey, state) {
+        let element = document.getElementById('cf_wrapper_inner_'+ displayKey);
+        if(element) {
+            if (state == "hide") {
+                element.setAttribute("aria-hidden", "true");
+            } else {
+                element.setAttribute("aria-hidden", "false");
+            }
         }
     },
 
@@ -996,7 +1049,7 @@ var customFilters = {
 /**
  * Class that filter's the list elements (text), through a text input
  */
-var CfElementFilter = new Class({
+/*var CfElementFilter = new Class({
     Implements: [Options, Events],
     options: {
         module_id: null,
@@ -1090,10 +1143,10 @@ var CfElementFilter = new Class({
         }.bind(this));
     },
 
-    /**
+    /!**
      * Clear all the html tags from the text/labels of the values
      * @param Array elements
-     */
+     *!/
     clearHtmlFromText:function(elements){
         elements.each(function (element) {
             var textElements=element.getElements(this.options.optionClass);//the text part of the element
@@ -1101,7 +1154,149 @@ var CfElementFilter = new Class({
             textElements[0].set('html',text);
         }.bind(this));
     }
-});
+});*/
+class CfElementFilter {
+    constructor(observer, list, options) {
+        this.observeElement = document.getElementById(observer);
+        this.elements = Array.from(document.querySelectorAll(list));
+        this.matches = this.elements;
+        this.options = {
+            module_id: null,
+            isexpanable_tree: false,
+            filter_key: '',
+            cache: true,
+            caseSensitive: false,
+            ignoreKeys: [13, 27, 32, 37, 38, 39, 40],
+            matchAnywhere: true,
+            optionClass: ".cf_option",
+            property: "text",
+            trigger: "keyup",
+            onHide: '',
+            onComplete: '',
+            onStart: function() {
+                this.elements.forEach(element => {
+                    element.classList.add('cf_hide');
+                });
+            },
+            onShow: function(element) {
+                element.classList.remove('cf_hide');
+            },
+            onMatchText: function(element) {
+                var user_input = this.observeElement.value;
+                var i = this.options.caseSensitive ? "" : "i";
+                var regex = new RegExp(user_input, i);
+                var textElements = element.querySelectorAll(this.options.optionClass);
+                var text = textElements[0].getAttribute(this.options.property);
+                var text_lc = text.toLowerCase();
+                var user_input_lc = user_input.toLowerCase();
+                var start_char = text_lc.indexOf(user_input_lc);
+                var part = text.substr(start_char, user_input.length);
+                var matchedtext = text.replace(regex, '<span class="cf_match">' + part + '</span>');
+                textElements[0].innerHTML = matchedtext;
+            }
+        };
+        Object.assign(this.options, options);
+        this.listen();
+    }
+
+    listen() {
+        this.observeElement.addEventListener(this.options.trigger, (e) => {
+            if (this.observeElement.value.length) {
+                if (!this.options.ignoreKeys.includes(e.code)) {
+                    this.onStart();
+                    this.findMatches(this.options.cache ? this.matches : this.elements);
+                    this.onComplete();
+                }
+            } else {
+                this.elements.forEach(element => {
+                    element.classList.remove("cf_hide");
+                });
+                this.clearHtmlFromText(this.elements);
+                this.findMatches(this.elements, false);
+                var hiddenEl = this.elements.querySelectorAll('.cf_invisible');
+                hiddenEl.forEach(function(e) {
+                    e.style.display = '';
+                });
+            }
+        });
+    }
+
+    onStart() {
+        this.elements.forEach(element => {
+            element.classList.add('cf_hide');
+        });
+        if (typeof this.options.onStart === 'function') {
+            this.options.onStart.call(this);
+        }
+    }
+
+    onComplete() {
+        if (typeof this.options.onComplete === 'function') {
+            this.options.onComplete.call(this);
+        }
+    }
+
+    findMatches(elements, t) {
+        var user_input = this.observeElement.value;
+        var user_input2 = this.options.matchAnywhere ? user_input : "^" + user_input;
+        var i = this.options.caseSensitive ? "" : "i";
+        var regex = new RegExp(user_input2, i);
+        elements.forEach(element => {
+            var n = t == undefined ? regex.test(element.getAttribute(this.options.property)) : t;
+            var hiddenEl = element.classList.contains("cf_invisible"); //hidden categories
+
+            if (n) {
+                if (hiddenEl) {
+                    element.style.display = 'block';
+                }
+                this.onMatchText(element);
+                this.onShow(element);
+            } else {
+                if (hiddenEl) {
+                    element.style.display = '';
+                }
+                if (element.dataset.showing) {
+                    this.onHide(element);
+                }
+                element.dataset.showing = false;
+            }
+        });
+    }
+
+    onMatchText(element) {
+        if (typeof this.options.onMatchText === 'function') {
+            this.options.onMatchText.call(this, element);
+        }
+    }
+
+    onShow(element) {
+        if (typeof this.options.onShow === 'function') {
+            this.options.onShow.call(this, element);
+        }
+    }
+
+    onHide(element) {
+        if (typeof this.options.onHide === 'function') {
+            this.options.onHide.call(this, element);
+        }
+    }
+
+    clearHtmlFromText(elements) {
+        elements.forEach(element => {
+            var textElements = element.querySelectorAll(this.options.optionClass);
+            var text = textElements[0].getAttribute(this.options.property);
+            textElements[0].innerHTML = text;
+        });
+    }
+}
+
+
+
+
+
+
+
+
 
 class CfTooltip {
 
@@ -1155,7 +1350,7 @@ String.prototype.removeScripts = function(exec){
 
     // Quote json strings. Otherwise they produce an error when evaluated.
     let textNoJson = this.replace(/<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/gi, function(all, code){
-        scripts+= '\''+code+'\'' + '\n';
+        scripts+= '('+code+')' + '\n';
     });
 
     // remove the scripts from the text
@@ -1164,6 +1359,34 @@ String.prototype.removeScripts = function(exec){
         return '';
     });
 
-    if (typeOf(exec) == 'function') exec(scripts, text);
+    if (typeof exec == 'function') exec(scripts, text);
     return text;
 };
+
+String.prototype.applyCss = function(){
+    let css = '';
+
+    // remove the css from the text
+    let text = this.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, function(all, code){
+        css += code + '\n';
+        return '';
+    });
+
+    // apply the css
+    if (css) {
+        let head = document.head || document.getElementsByTagName('head')[0];
+        let style = document.createElement('style');
+        style.appendChild(document.createTextNode(css));
+        head.appendChild(style);
+    }
+    return text;
+};
+
+window.addEventListener('DOMContentLoaded', () => {customFilters.showMoreToggle()});
+window.addEventListener('CfModuleUpdate', (event) => {
+    let module_id;
+    if(typeof event.detail != 'undefined' && event.detail.module_id) {
+        module_id = event.detail.module_id;
+    }
+    customFilters.showMoreToggle(module_id);
+});

@@ -15,6 +15,7 @@ require_once dirname(__FILE__) . '/bootstrap.php';
 
 JLoader::register( 'HelperSetting_seo' , JPATH_ADMINISTRATOR . '/components/com_customfilters/helpers/setting_seo.php' );
 
+use Joomla\CMS\Application\SiteApplication;
 use Joomla\Utilities\ArrayHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel as JModelLegacy;
@@ -142,6 +143,7 @@ class OptionsHelper
 
     protected $HelperSetting_seo;
 
+	protected static $ActiveOptions = [] ;
 
     /**
      * OptionsHelper constructor.
@@ -154,21 +156,25 @@ class OptionsHelper
     public function __construct($params, $module = null)
     {
         $this->HelperSetting_seo = new HelperSetting_seo();
+		$app =  Factory::getContainer()->get(SiteApplication::class);
 
-        $app = Factory::getApplication();
         $this->moduleparams = $params;
         $this->componentparams = CustomfiltersConfig::getInstance();
         $this->menuparams = cftools::getMenuparams();
         $this->customFltActive = cftools::getCustomFilters($this->moduleparams);
-        $jinput = $app->input;
-        $this->input = $jinput;
+
+        $this->input = $app->input;
         $this->selected_flt = CfInput::getInputs();
+
+
+//		echo'<pre>';print_r( $this->selected_flt );echo'</pre>'.__FILE__.' '.__LINE__;
 		
+//        die(__FILE__ .' '. __LINE__ );
 
 		
         $this->shopperGroups = cftools::getUserShopperGroups();
         $this->vmVersion = VmConfig::getInstalledVersion();
-        $option = $jinput->get('option', '', 'cmd');
+        $option = $app->input->get('option', '', 'cmd');
 
         // in cf pages get the returned product ids
         if ($option == 'com_customfilters') {
@@ -333,7 +339,7 @@ class OptionsHelper
         return $query;
     }
 
-	protected static $ActiveOptions = [] ;
+
 
 	/**
 	 * Получить активные ОПЦИИ текущего фильтра , используя зависимости от выбора в других фильтрах
@@ -425,9 +431,15 @@ class OptionsHelper
 			$customfilter = $custom_filters[$filterCustomId];
         }
 
+//	    echo'<pre>';print_r( $field );echo'</pre>'.__FILE__.' '.__LINE__;
+//	    echo'<pre>';print_r( $customfilter );echo'</pre>'.__FILE__.' '.__LINE__;
+//	    die(__FILE__ .' '. __LINE__ );
 
         $db = Factory::getDbo();
         $query = $db->getQuery(true);
+
+
+
 
 
 		$query = $this->buildQuery( $query, $field, $customfilter , true);

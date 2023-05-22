@@ -6,7 +6,9 @@
  * @license        GNU General Public License version 2 or later; see LICENSE.txt
  */
 
+use Joomla\CMS\Application\SiteApplication;
 use Joomla\CMS\Cache\Cache;
+use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\ModuleHelper;
@@ -19,11 +21,15 @@ if (!defined('DEV_IP'))  define('DEV_IP',     '***.***.***.***');
 //load dependencies
 require_once dirname(__FILE__) . '/bootstrap.php';
 
-$__v = ModCfFilteringHelper::getModuleVersion();
-
 JLoader::registerNamespace( 'GNZ11' , JPATH_LIBRARIES . '/GNZ11' , $reset = false , $prepend = false , $type = 'psr4' );
 JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/include/seoTools.php');
 JLoader::register('seoTools_uri' , JPATH_ROOT .'/components/com_customfilters/include/seoTools_uri.php');
+
+
+$__v = ModCfFilteringHelper::getModuleVersion();
+
+$app =  Factory::getContainer()->get(SiteApplication::class);
+
 
 
 $paramsComponent = ComponentHelper::getParams('com_customfilters');
@@ -73,16 +79,26 @@ $jlang = \JFactory::getLanguage();
 $jlang->load('com_customfilters');
 $jlang->load('com_virtuemart');
 
-//$doc->addScript(JURI::root().'modules/mod_cf_filtering/assets/general.js' , ['mime' => 'text/javascript'], ['defer' => true]);
-$urlGeneralUncompressed = JURI::root().'modules/mod_cf_filtering/assets/general-uncompressed.js' . '?i=' . $__v  ;
+//$doc->addScript(Uri::root().'modules/mod_cf_filtering/assets/general.js' , ['mime' => 'text/javascript'], ['defer' => true]);
+$urlGeneralUncompressed = Uri::root().'modules/mod_cf_filtering/assets/js/general-uncompressed.js' . '?i=' . $__v  ;
 $doc->addScript( $urlGeneralUncompressed , ['mime' => 'text/javascript'], ['defer' => true]);
-$doc->addScript(JURI::root().'components/com_virtuemart/assets/js/cvfind.js' . '?i=' . $__v , ['mime' => 'text/javascript']);
-$doc->addStyleSheet(JURI::root().'modules/mod_cf_filtering/assets/style.css' . '?i=' . $__v );
+$doc->addScript(Uri::root().'components/com_virtuemart/assets/js/cvfind.js' . '?i=' . $__v , ['mime' => 'text/javascript']);
+$doc->addStyleSheet(Uri::root().'modules/mod_cf_filtering/assets/css/style.css' . '?i=' . $__v );
+
+
+try
+{
+	$cacheId = ModCfFilteringHelper::getCacheId($params, $module);
+}
+catch (Exception $e)
+{
+}
+
+$cache = $cache = Factory::getContainer()->get(CacheControllerFactoryInterface::class)
+	->createCacheController( 'output', ['defaultgroup' => 'mod_cf_filtering']);
 
 
 
-$cacheId = ModCfFilteringHelper::getCacheId($params, $module);
-$cache = Factory::getCache('mod_cf_filtering', '');
 
 
 
@@ -90,7 +106,7 @@ $cache = Factory::getCache('mod_cf_filtering', '');
 try
 {
 
-	$app = Factory::getApplication();
+
 	$juri = Uri::getInstance();
 	$filterUrl = $juri->getPath();
 	$view = $app->input->get('view' , false , 'STRING ') ;

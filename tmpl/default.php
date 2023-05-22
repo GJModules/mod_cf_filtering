@@ -8,9 +8,12 @@
 
 defined('_JEXEC')or die;
 
+use Joomla\CMS\Application\SiteApplication;
+use Joomla\CMS\Document\FactoryInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Profiler\Profiler;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\HTML\HTMLHelper;
 
@@ -28,10 +31,11 @@ elseif (version_compare(substr(JVERSION, 0, 3), '3.0', 'ge'))
 if(count($filters) == 0) {
     return false;
 }
-$app = JFactory::getApplication();
-$document = Factory::getDocument();
+$app =  Factory::getContainer()->get(SiteApplication::class);
+$document = Factory::getApplication()->getDocument();
 $direction = $document->getDirection();
-$jinput = Factory::getApplication()->input;
+
+$jinput = $app->input;
 
 
 
@@ -61,7 +65,7 @@ JLoader::register( 'seoTools' , JPATH_ROOT . '/components/com_customfilters/incl
 $seoTools = new seoTools();
 $patchToVmCategory = seoTools::getPatchToVmCategory();
 
-
+$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx' , 'mod-id_'.$module->id ) ) ;
 
 /*
  * view == module is used only when the module is loaded with ajax.
@@ -69,18 +73,19 @@ $patchToVmCategory = seoTools::getPatchToVmCategory();
  * The cf_wrapp_all of the primary module, will be used as the container of the ajax response
  */
 if( $view != 'module' ){?>
-    <div id="cf_wrapp_all_<?php echo $module->id ?>" class="cf_wrapp_all cf_wrapp_all<?php echo $moduleclass_sfx?>">
+    <div id="cf_wrapp_all_<?php echo $module->id ?>" class="cf_wrapp_all cf_wrapp_all<?= $moduleclass_sfx?>">
 <?php }
 ?>
+
+
     <div id="cf_ajax_loader_<?php echo $module->id?>"></div>
-    <form method="get" action="<?php echo Route::_('index.php?option=com_customfilters&view=products&Itemid='.$Itemid)?>"
-          class="cf_form<?php echo htmlspecialchars($params->get('moduleclass_sfx'));?>" id="cf_form_<?php echo $module->id?>">
+    <form method="get"
+          action="<?=Route::_('index.php?option=com_customfilters&view=products&Itemid='.$Itemid)?>"
+          class="cf_form <?= $moduleclass_sfx ?>"
+          id="cf_form_<?= $module->id?> ">
 
         <?php
-        $profiler = JProfiler::getInstance('PRO_Application - module');
-//        $profiler->mark('Start default.php');
-
-
+        $profiler = Profiler::getInstance('PRO_Application - module');
 
 
         /**
@@ -130,7 +135,10 @@ if( $view != 'module' ){?>
                         ?>
 
                         <input type="text" class="cf_smart_search" id="<?php echo $smart_input_id?>"
-                               placeholder="<?php echo Text::_('MOD_CF_SEARCH');?>"  aria-label="<?php echo Text::_('MOD_CF_SEARCH');?>" maxlength="100"/><?php
+                               placeholder="<?= Text::_('MOD_CF_SEARCH');?>"
+                               aria-label="<?= Text::_('MOD_CF_SEARCH');?>"
+                               maxlength="100"/>
+                        <?php
 
                         $scriptProcesses[]="
 								 var myFilter{$key} = new CfElementFilter('{$smart_input_id}', '#{$list_id} li',{
@@ -147,7 +155,7 @@ if( $view != 'module' ){?>
 
 
                     /*
-                     * загружать параметры через подмакеты.
+                      * загружать параметры через подмакеты.
                       * Фильтр может иметь более 1 дисплея (например, входы диапазона и ползунок вместе)
                      * load the options through sub-layouts.
                      * A filter can have more than 1 display (e.g. range inputs and slider together)
@@ -184,9 +192,10 @@ if( $view != 'module' ){?>
 
             ?>
             <a class="cf_resetAll_link cf_no_ajax" rel="nofollow"
-               data-module-id="<?= $module->id ?>" href="<?= $patchToVmCategory ?>">
+               data-module-id="<?= $module->id ?>"
+               href="<?= $patchToVmCategory ?>">
                 <span class="cf_resetAll_label">
-                    <?= JText::_('MOD_CF_RESET_ALL')?>
+                    <?= Text::_('MOD_CF_RESET_ALL')?>
                 </span>
             </a>
             <?php
@@ -231,7 +240,7 @@ if( $view != 'module' ){?>
         if($results_trigger=='btn'):?>
             <br />
             <input type="submit" class="cf_apply_button btn btn-primary" id="cf_apply_button_<?php echo $module->id?>"
-                   value="<?php echo JText::_('MOD_CF_APPLY');?>" />
+                   value="<?=Text::_('MOD_CF_APPLY');?>" />
         <?php
         endif;
         ?>
@@ -256,12 +265,20 @@ if( $params->get('results_loading_mode','ajax')=='ajax' && $component != 'com_cu
     \cftools::loadScriptsNstyles();
 }
 
+
+
+
 if (
         ($results_trigger == 'btn' || $results_loading_mode == 'ajax') &&
         ($jinput->get('view', '') != 'module' || $jinput->get('option', '') != 'com_customfilters')) {
 
     $scriptProcesses[] = "customFilters.assignEvents(" . $module->id . ");";
 }
+
+if ( $jinput->get('view', '') === 'module' && $results_loading_mode == 'ajax' )
+{
+	$scriptProcesses[] = "customFilters.assignEvents(" . $module->id . ");";
+}#END IF
 
 $styles = $FilteringHelper->getStyles();
 if (!empty($styles)) {
@@ -304,16 +321,25 @@ if (($jinput->get('view', '') != 'module' && $jinput->get('option', '') == 'com_
     }
 }
 
-if (!empty($scriptProcesses)) {
-    $script = "window.addEvent('domready',function(){";
-    foreach ($scriptProcesses as $process) {
-        $script .= $process;
-    }
-    $script .= "});";
 
-    if ($view == 'module' && $component == 'com_customfilters') {
-        echo '<script type="text/javascript">' . $script . '</script>';
-    } else {
-        $document->addScriptDeclaration($script);
-    }
+
+if (!empty($scriptProcesses)) {
+	$script = '';
+	foreach ($scriptProcesses as $process) {
+		$script .= $process;
+	}
+
+
+	if ($view == 'module' && $component == 'com_customfilters') {
+
+		// Function called after the ajax completion, to initialize the module
+		$scriptInject = 'function customFiltersModuleInit(moduleId) {
+            if(moduleId!=' . $module->id . '){return false;}' .
+			$script . '}';
+		echo '<script type="text/javascript">' . $scriptInject . '</script>';
+
+	} else {
+		$scriptInject = "window.addEventListener('DOMContentLoaded', () => {" . $script . "});";
+		$document->addScriptDeclaration($scriptInject);
+	}
 }

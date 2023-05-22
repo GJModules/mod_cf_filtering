@@ -9,6 +9,8 @@
 // no direct access
 defined( '_JEXEC' ) or die();
 
+use Joomla\CMS\Application\SiteApplication;
+use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Profiler\Profiler;
 use Joomla\Registry\Registry;
 use Joomla\CMS\Router\Route;
@@ -235,6 +237,7 @@ class ModCfFilteringHelper
 	 */
 	public static function getHtmlFilterCache( stdClass $module , Registry $params )
 	{
+		
 
 
 		// Получить все фильтры с опциями для модуля
@@ -243,13 +246,12 @@ class ModCfFilteringHelper
 
 		$scriptVars = $FilteringHelper->getScriptVars();
 
-
-
-
-
 		$selected_filters = $FilteringHelper->getSelectedFilters();
 		$moduleclass_sfx  = htmlspecialchars( $params->get('moduleclass_sfx' ,   $module->module.'_'.$module->id ), ENT_COMPAT, 'UTF-8');
-		$LayoutPath       = \JModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
+		$LayoutPath       = ModuleHelper::getLayoutPath('mod_cf_filtering', $params->get('layout', 'default'));
+
+
+
 
 		ob_start();
 
@@ -258,6 +260,7 @@ class ModCfFilteringHelper
 		$htmlData = ob_get_contents();
 		ob_end_clean();
 
+		
 		return $htmlData ;
 
 	}
@@ -1821,12 +1824,15 @@ class ModCfFilteringHelper
 	 * Получить версию модуля из файла манифеста
 	 * ---
 	 * @return string - версия модуля - используется как MEDIA VERSION - для загрузки ресурсов
+	 * @throws Exception
 	 * @since 3.9
-	 * TODO - добавить в шаблон Создания модуля
+	 *        TODO - добавить в шаблон Создания модуля
 	 */
 	public static function getModuleVersion():string
 	{
-		$doc           = \Joomla\CMS\Factory::getDocument();
+		$app =  Factory::getContainer()->get(SiteApplication::class);
+		$doc = Factory::getApplication()->getDocument();
+
 		$scriptOptions = $doc->getScriptOptions( 'mod_cf_filtering' );
 		if ( isset( $scriptOptions[ 'version' ] ) )
 		{
@@ -1843,6 +1849,56 @@ class ModCfFilteringHelper
 		$version = $dom->getElementsByTagName( 'version' )->item( 0 )->textContent;
 		$doc->addScriptOptions( 'mod_cf_filtering' , [ 'version' => $version ] , true );
 
+		$doc->addScriptOptions( 'mod_cf_filtering' , [
+			'category_url' => seoTools_uri::getPatchToVmCategory()  ,
+			'category_id' => $app->input->get('virtuemart_category_id' , 0 , 'INT') ,
+		] , true );
+
+
+		
 		return $version;
+	}
+
+	public static function loadResetModuleAjax(){
+
+		$app =  Factory::getContainer()->get(SiteApplication::class);
+		$currentUrl = Uri::getInstance();
+		$currentUrl->setPath('/catalog/metalocherepitsa/montekristo');
+		$currentUrl->setVar('option'  , 'com_virtuemart');
+		// Получаем параметры запроса GET
+		$params = $currentUrl->getQuery(true);
+
+//		echo'<pre>';print_r( $currentUrl );echo'</pre>'.__FILE__.' '.__LINE__;
+//		echo'<pre>';print_r( $params );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
+
+
+		$app->input->set('option' , 'com_virtuemart' );
+		$app->input->set('view' , 'category' );
+		$app->input->set('virtuemart_category_id' , $params['virtuemart_category_id'] );
+
+
+		/**
+		 * Получить модуль
+		 */
+		$module = JModuleHelper::getModule( 'mod_cf_filtering'  );
+		$html = JModuleHelper::renderModule($module);
+
+		$juri        = JUri::getInstance();
+		$catUrl      = seoTools_uri::getPatchToVmCategory( $params['virtuemart_category_id'] );
+		$catUrl      = preg_replace('/^\//' , '' , $catUrl);
+		$redirectUrl = $juri::root().$catUrl;
+
+		$app->redirect($redirectUrl , 301);
+
+//		echo $html ;
+		die(  );
+
+
+//		echo'<pre>';print_r( $html );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
+
 	}
 }
